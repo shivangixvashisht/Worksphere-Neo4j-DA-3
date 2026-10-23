@@ -34,3 +34,9 @@ test('demo parameters are validated', () => {
   assert.throws(() => buildParams(rec, { start_time: '12:00', end_time: '10:00' }), /End time must be after start time/);
   assert.throws(() => buildParams(rec, { date: '2026-13-01' }), /valid date/);
 });
+
+test('neo4j/03_demo_queries.cypher is up to date with the app presets', () => {
+  const fs = require('fs');
+  const { render, OUT } = require('../../backend/scripts/generate-demo-queries');
+  assert.equal(fs.readFileSync(OUT, 'utf8'), render(), 'run "npm run docs:queries"');
+});

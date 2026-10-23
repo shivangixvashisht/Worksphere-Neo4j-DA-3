@@ -13,6 +13,7 @@
     "db:check": "node backend/scripts/check-connection.js",
     "seed": "node backend/scripts/seed.js",
     "db:reset": "node backend/scripts/seed.js --reset-only",
+    "docs:queries": "node backend/scripts/generate-demo-queries.js",
     "test": "node --test tests/unit/*.test.js",
     "test:integration": "node --test --test-concurrency=1 tests/integration/*.test.js",
     "test:all": "npm test && npm run test:integration"
