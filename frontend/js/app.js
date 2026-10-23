@@ -1,5 +1,23 @@
-// WorkSphere - Enterprise Frontend Logic & Oracle Integration
+// WorkSphere - Enterprise Frontend Logic
+// DA-3: ported from the original Oracle version to the Neo4j backend.
+// The REST API keeps the original paths and UPPERCASE column keys, so most of
+// this file is unchanged; Neo4j-specific additions are marked "DA-3".
 const API_BASE = '/api';
+
+// DA-3: HTML-escape every database value before it is placed in innerHTML.
+function esc(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// DA-3: local calendar date (the original used toISOString(), which is the UTC date
+// and shows "yesterday" in India between 00:00 and 05:30 IST).
+function localDateStr(d = new Date()) {
+  const pad = v => String(v).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 // Application State
 let state = {
@@ -11,7 +29,7 @@ let state = {
   payments: [],
   activeCategoryFilter: 'ALL',
   selectedTimelineRoomId: null,
-  timelineDate: new Date().toISOString().split('T')[0],
+  timelineDate: localDateStr(),
   selectedStartHour: null,
   selectedEndHour: null,
   checkoutData: null,
@@ -32,7 +50,7 @@ function showToast(message, type = 'success') {
   toast.className = `${bgColor} text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs transition-all transform duration-300 translate-y-2 opacity-0 pointer-events-auto border border-white/10`;
   toast.innerHTML = `
     <i class="fa-solid ${icon} text-base"></i>
-    <div class="flex-1 font-semibold">${message}</div>
+    <div class="flex-1 font-semibold">${esc(message)}</div>
     <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
   `;
 
@@ -114,7 +132,7 @@ async function loadSpaces() {
       const spaceSelect = document.getElementById('room-space-id');
       if (spaceSelect) {
         spaceSelect.innerHTML = state.spaces.map(s => `
-          <option value="${s.SPACE_ID}">${s.NAME} (${s.CITY})</option>
+          <option value="${esc(s.SPACE_ID)}">${esc(s.NAME)} (${esc(s.CITY)})</option>
         `).join('');
       }
     }
@@ -132,7 +150,7 @@ async function loadPlans() {
       const planSelect = document.getElementById('member-plan-id');
       if (planSelect) {
         planSelect.innerHTML = `<option value="">-- None / Pay per use --</option>` + state.plans.map(p => `
-          <option value="${p.PLAN_ID}">${p.PLAN_NAME} (₹${p.MONTHLY_FEE}/mo)</option>
+          <option value="${esc(p.PLAN_ID)}">${esc(p.PLAN_NAME)} (₹${esc(p.MONTHLY_FEE)}/mo)</option>
         `).join('');
       }
     }
@@ -204,7 +222,7 @@ function renderDashboard() {
   renderDashboardBookings();
   const quickDate = document.getElementById('quick-date');
   if (quickDate && !quickDate.value) {
-    quickDate.value = new Date().toISOString().split('T')[0];
+    quickDate.value = localDateStr();
   }
 }
 
@@ -232,19 +250,19 @@ function renderDashboardBookings() {
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h4 class="font-bold text-slate-900 text-sm">${b.ROOM_NAME}</h4>
+            <h4 class="font-bold text-slate-900 text-sm">${esc(b.ROOM_NAME)}</h4>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">CONFIRMED</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">${b.SPACE_NAME} • Reserved by <span class="text-slate-800 font-semibold">${b.MEMBER_NAME}</span></p>
+          <p class="text-xs text-slate-500 mt-0.5">${esc(b.SPACE_NAME)} • Reserved by <span class="text-slate-800 font-semibold">${esc(b.MEMBER_NAME)}</span></p>
           <div class="flex items-center gap-3 text-[11px] text-slate-600 mt-1 font-mono">
-            <span><i class="fa-regular fa-calendar text-[10px] mr-1 text-slate-400"></i>${b.BOOKING_DATE}</span>
-            <span class="text-blue-700 font-bold"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${b.START_TIME} - ${b.END_TIME}</span>
+            <span><i class="fa-regular fa-calendar text-[10px] mr-1 text-slate-400"></i>${esc(b.BOOKING_DATE)}</span>
+            <span class="text-blue-700 font-bold"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${esc(b.START_TIME)} - ${esc(b.END_TIME)}</span>
             <span class="text-emerald-700 font-bold">₹${Number(b.TOTAL_AMOUNT).toFixed(2)}</span>
           </div>
         </div>
       </div>
       <div class="flex items-center gap-2 self-end sm:self-center">
-        <button onclick="cancelBooking(${b.BOOKING_ID})" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200 transition">
+        <button onclick="cancelBooking(${esc(b.BOOKING_ID)})" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200 transition">
           <i class="fa-solid fa-ban text-[10px] mr-1"></i> Cancel
         </button>
       </div>
@@ -392,25 +410,25 @@ function renderCatalog() {
         <div>
           <!-- Image Header with Badges -->
           <div class="h-44 relative overflow-hidden bg-slate-100">
-            <img src="${imgUrl}" alt="${room.ROOM_NAME}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+            <img src="${imgUrl}" alt="${esc(room.ROOM_NAME)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent"></div>
             
             <!-- Top Badges -->
             <div class="absolute top-3 inset-x-3 flex justify-between items-center">
               <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white/95 text-slate-800 shadow-sm backdrop-blur border border-white/50">
-                <i class="fa-solid fa-layer-group text-blue-600 mr-1"></i> ${room.ROOM_TYPE}
+                <i class="fa-solid fa-layer-group text-blue-600 mr-1"></i> ${esc(room.ROOM_TYPE)}
               </span>
               <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${room.STATUS === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'} flex items-center gap-1 shadow-sm">
-                <span class="h-1.5 w-1.5 rounded-full ${room.STATUS === 'AVAILABLE' ? 'bg-emerald-500' : 'bg-rose-500'}"></span> ${room.STATUS}
+                <span class="h-1.5 w-1.5 rounded-full ${room.STATUS === 'AVAILABLE' ? 'bg-emerald-500' : 'bg-rose-500'}"></span> ${esc(room.STATUS)}
               </span>
             </div>
 
             <!-- Bottom Card Title inside Image overlay -->
             <div class="absolute bottom-3 inset-x-3 text-white">
               <span class="text-[11px] text-blue-200 font-medium block flex items-center gap-1">
-                <i class="fa-solid fa-location-dot text-blue-400"></i> ${room.SPACE_NAME}
+                <i class="fa-solid fa-location-dot text-blue-400"></i> ${esc(room.SPACE_NAME)}
               </span>
-              <h3 class="text-base font-bold text-white tracking-tight drop-shadow-sm">${room.ROOM_NAME}</h3>
+              <h3 class="text-base font-bold text-white tracking-tight drop-shadow-sm">${esc(room.ROOM_NAME)}</h3>
             </div>
           </div>
 
@@ -423,7 +441,7 @@ function renderCatalog() {
                 </div>
                 <div>
                   <div class="text-[10px] text-slate-400 uppercase font-semibold">Capacity</div>
-                  <strong class="text-slate-900 font-bold">${room.CAPACITY} Pax</strong>
+                  <strong class="text-slate-900 font-bold">${esc(room.CAPACITY)} Pax</strong>
                 </div>
               </div>
               <div class="flex items-center gap-2 text-slate-600">
@@ -443,7 +461,7 @@ function renderCatalog() {
               <div class="flex flex-wrap gap-1.5">
                 ${facilitiesList.map(f => `
                   <span class="px-2.5 py-1 rounded-md bg-slate-50 text-[11px] text-slate-700 border border-slate-200 flex items-center gap-1.5">
-                    <i class="fa-solid fa-check text-[9px] text-blue-600"></i> ${f}
+                    <i class="fa-solid fa-check text-[9px] text-blue-600"></i> ${esc(f)}
                   </span>
                 `).join('')}
               </div>
@@ -453,13 +471,13 @@ function renderCatalog() {
 
         <!-- Action Footer -->
         <div class="p-5 pt-0 flex items-center gap-2 border-t border-slate-100/80 mt-2">
-          <button onclick="openSlotPickerForRoom(${room.ROOM_ID})" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+          <button onclick="openSlotPickerForRoom(${esc(room.ROOM_ID)})" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
             <i class="fa-solid fa-calendar-check text-xs"></i> Select Slots & Lock
           </button>
-          <button onclick="openEditRoomModal(${room.ROOM_ID})" class="h-9 w-9 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-700 flex items-center justify-center text-xs border border-slate-200 hover:border-amber-300 transition" title="Update Room in Oracle">
+          <button onclick="openEditRoomModal(${esc(room.ROOM_ID)})" class="h-9 w-9 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-700 flex items-center justify-center text-xs border border-slate-200 hover:border-amber-300 transition" title="Update Room in Neo4j">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
-          <button onclick="deleteRoom(${room.ROOM_ID})" class="h-9 w-9 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-700 flex items-center justify-center text-xs border border-slate-200 hover:border-rose-300 transition" title="Delete Room from Oracle">
+          <button onclick="deleteRoom(${esc(room.ROOM_ID)})" class="h-9 w-9 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-700 flex items-center justify-center text-xs border border-slate-200 hover:border-rose-300 transition" title="Delete Room from Neo4j">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -480,8 +498,8 @@ function populateTimelineRoomDropdown() {
   const select = document.getElementById('timeline-room-select');
   if (!select) return;
   select.innerHTML = state.rooms.map(r => `
-    <option value="${r.ROOM_ID}" ${Number(r.ROOM_ID) === Number(state.selectedTimelineRoomId) ? 'selected' : ''}>
-      ${r.ROOM_NAME} (₹${r.HOURLY_RATE}/hr, ${r.CAPACITY} pax)
+    <option value="${esc(r.ROOM_ID)}" ${Number(r.ROOM_ID) === Number(state.selectedTimelineRoomId) ? 'selected' : ''}>
+      ${esc(r.ROOM_NAME)} (₹${esc(r.HOURLY_RATE)}/hr, ${esc(r.CAPACITY)} pax)
     </option>
   `).join('');
 }
@@ -498,9 +516,10 @@ function openSlotPickerForRoom(roomId) {
 }
 
 function shiftTimelineDate(days) {
-  const cur = new Date(state.timelineDate);
+  const [y, m, d] = state.timelineDate.split('-').map(Number);
+  const cur = new Date(y, m - 1, d);
   cur.setDate(cur.getDate() + days);
-  state.timelineDate = cur.toISOString().split('T')[0];
+  state.timelineDate = localDateStr(cur);
   const dp = document.getElementById('timeline-date-picker');
   if (dp) dp.value = state.timelineDate;
   state.selectedStartHour = null;
@@ -516,7 +535,7 @@ function setTimelineDate(mode) {
     const diff = cur.getDate() + (day === 0 ? 1 : 8 - day);
     cur.setDate(diff);
   }
-  state.timelineDate = cur.toISOString().split('T')[0];
+  state.timelineDate = localDateStr(cur);
   const dp = document.getElementById('timeline-date-picker');
   if (dp) dp.value = state.timelineDate;
   state.selectedStartHour = null;
@@ -542,7 +561,7 @@ function renderTimelineGrid() {
   document.getElementById('timeline-current-rate').textContent = `₹ ${Number(curRoom.HOURLY_RATE).toFixed(0)}/hr`;
   document.getElementById('timeline-current-space-city').textContent = `${curRoom.SPACE_NAME}, ${curRoom.CITY}`;
 
-  // Find confirmed bookings for this room on this date in Oracle
+  // Find confirmed bookings for this room on this date in Neo4j
   const existingBookings = state.bookings.filter(b => 
     Number(b.ROOM_ID) === Number(curRoom.ROOM_ID) &&
     b.BOOKING_DATE === state.timelineDate &&
@@ -569,7 +588,7 @@ function renderTimelineGrid() {
   ];
 
   hours.forEach(slot => {
-    // Check if slot overlaps with any confirmed booking in Oracle
+    // Check if slot overlaps with any confirmed booking in Neo4j
     const isBooked = existingBookings.some(b => {
       const bStart = parseInt(b.START_TIME.split(':')[0], 10);
       const bEnd = parseInt(b.END_TIME.split(':')[0], 10);
@@ -740,7 +759,7 @@ async function submitCompleteCheckout() {
 
   const btn = document.getElementById('btn-confirm-payment');
   btn.disabled = true;
-  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Writing to Oracle 21c...`;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Writing to Neo4j...`;
 
   // Use default active resident member for checkout booking
   const defaultMember = state.members[0] || { MEMBER_ID: 1001 };
@@ -767,14 +786,14 @@ async function submitCompleteCheckout() {
     btn.innerHTML = `<i class="fa-solid fa-check-double"></i> Authorize & Lock Space`;
 
     if (data.success) {
-      showToast('Reservation Locked & Settled in Oracle DB!', 'success');
+      showToast(data.message || 'Reservation Locked & Settled in Neo4j!', 'success');
       closeModal('checkout-modal');
       await loadBookings();
       await loadPayments();
       await loadStats();
       switchTab('dashboard');
     } else {
-      // Caught Oracle trigger error (e.g. ORA-20001 double booking)
+      // Overlap rule rejected the slot (HTTP 409) or validation failed (HTTP 400)
       showToast(data.error, 'error');
     }
   } catch (err) {
@@ -849,7 +868,7 @@ async function handleRoomSubmit(e) {
 }
 
 async function deleteRoom(id) {
-  if (!confirm(`Permanently delete room #${id} from Oracle DB? All linked reservations and facilities will cascade delete.`)) return;
+  if (!confirm(`Permanently delete room #${id} from Neo4j? All linked reservations, payments and facilities will cascade delete.`)) return;
 
   try {
     const res = await fetch(`${API_BASE}/rooms/${id}`, { method: 'DELETE' });
@@ -879,27 +898,27 @@ function renderMembersTable(members) {
 
   tbody.innerHTML = members.map(m => `
     <tr class="hover:bg-blue-50/40 border-b border-slate-100 transition">
-      <td class="px-6 py-4 font-mono font-bold text-blue-600">#${m.MEMBER_ID}</td>
-      <td class="px-6 py-4 font-bold text-slate-900">${m.FIRST_NAME} ${m.LAST_NAME}</td>
-      <td class="px-6 py-4 text-slate-600 font-mono text-xs">${m.EMAIL}</td>
-      <td class="px-6 py-4 text-slate-600 font-mono text-xs">${m.PHONE || '-'}</td>
+      <td class="px-6 py-4 font-mono font-bold text-blue-600">#${esc(m.MEMBER_ID)}</td>
+      <td class="px-6 py-4 font-bold text-slate-900">${esc(m.FIRST_NAME)} ${esc(m.LAST_NAME)}</td>
+      <td class="px-6 py-4 text-slate-600 font-mono text-xs">${esc(m.EMAIL)}</td>
+      <td class="px-6 py-4 text-slate-600 font-mono text-xs">${esc(m.PHONE || '-')}</td>
       <td class="px-6 py-4">
         <span class="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-          ${m.PLAN_NAME || 'Standard'} (₹${m.MONTHLY_FEE || 0}/mo)
+          ${esc(m.PLAN_NAME || 'Standard')} (₹${esc(m.MONTHLY_FEE || 0)}/mo)
         </span>
       </td>
-      <td class="px-6 py-4 text-slate-500 font-mono text-xs">${m.JOIN_DATE}</td>
+      <td class="px-6 py-4 text-slate-500 font-mono text-xs">${esc(m.JOIN_DATE)}</td>
       <td class="px-6 py-4">
         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          ${m.STATUS}
+          ${esc(m.STATUS)}
         </span>
       </td>
       <td class="px-6 py-4 text-right">
         <div class="flex items-center justify-end gap-2">
-          <button onclick="openEditMemberModal(${m.MEMBER_ID})" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200 transition">
+          <button onclick="openEditMemberModal(${esc(m.MEMBER_ID)})" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200 transition">
             Update
           </button>
-          <button onclick="deleteMember(${m.MEMBER_ID})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-semibold border border-rose-200 transition">
+          <button onclick="deleteMember(${esc(m.MEMBER_ID)})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-semibold border border-rose-200 transition">
             Delete
           </button>
         </div>
@@ -966,7 +985,7 @@ async function handleMemberSubmit(e) {
 }
 
 async function deleteMember(id) {
-  if (!confirm(`Delete member #${id}? All associated reservations will be deleted in Oracle.`)) return;
+  if (!confirm(`Delete member #${id}? All associated reservations and payments will be deleted in Neo4j.`)) return;
 
   try {
     const res = await fetch(`${API_BASE}/members/${id}`, { method: 'DELETE' });
@@ -994,7 +1013,7 @@ async function cancelBooking(id) {
     });
     const data = await res.json();
     if (data.success) {
-      showToast('Reservation marked CANCELLED in Oracle DB', 'info');
+      showToast('Reservation marked CANCELLED in Neo4j', 'info');
       await loadBookings();
       await loadStats();
       renderDashboard();
@@ -1018,27 +1037,27 @@ function renderPaymentsTable(payments) {
 
   tbody.innerHTML = payments.map(p => `
     <tr class="hover:bg-blue-50/40 border-b border-slate-100 transition">
-      <td class="px-6 py-4 font-mono font-bold text-blue-600">#${p.PAYMENT_ID}</td>
-      <td class="px-6 py-4 font-mono text-slate-400 text-xs">#${p.BOOKING_ID}</td>
-      <td class="px-6 py-4 font-bold text-slate-900">${p.MEMBER_NAME}</td>
-      <td class="px-6 py-4 text-slate-700 font-medium">${p.ROOM_NAME}</td>
+      <td class="px-6 py-4 font-mono font-bold text-blue-600">#${esc(p.PAYMENT_ID)}</td>
+      <td class="px-6 py-4 font-mono text-slate-400 text-xs">#${esc(p.BOOKING_ID)}</td>
+      <td class="px-6 py-4 font-bold text-slate-900">${esc(p.MEMBER_NAME)}</td>
+      <td class="px-6 py-4 text-slate-700 font-medium">${esc(p.ROOM_NAME)}</td>
       <td class="px-6 py-4 font-bold text-emerald-700 font-mono">₹ ${Number(p.AMOUNT).toFixed(2)}</td>
       <td class="px-6 py-4">
         <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 font-mono">
-          ${p.PAYMENT_METHOD}
+          ${esc(p.PAYMENT_METHOD)}
         </span>
       </td>
-      <td class="px-6 py-4 text-slate-500 font-mono text-xs">${p.PAYMENT_DATE}</td>
+      <td class="px-6 py-4 text-slate-500 font-mono text-xs">${esc(p.PAYMENT_DATE)}</td>
       <td class="px-6 py-4">
         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          ${p.STATUS}
+          ${esc(p.STATUS)}
         </span>
       </td>
       <td class="px-6 py-4 text-right flex items-center justify-end gap-1.5">
-        <button onclick="viewInvoiceModal(${p.PAYMENT_ID})" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition flex items-center gap-1 shadow-2xs">
+        <button onclick="viewInvoiceModal(${esc(p.PAYMENT_ID)})" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition flex items-center gap-1 shadow-2xs">
           <i class="fa-solid fa-file-invoice text-xs"></i> Invoice
         </button>
-        <button onclick="deletePayment(${p.PAYMENT_ID})" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold border border-rose-200 transition">
+        <button onclick="deletePayment(${esc(p.PAYMENT_ID)})" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold border border-rose-200 transition">
           Delete
         </button>
       </td>
@@ -1062,7 +1081,7 @@ function viewInvoiceModal(paymentId) {
   const bRef = document.getElementById('invoice-booking-ref');
   if (bRef) bRef.textContent = '#BK-' + p.BOOKING_ID;
   const dDisp = document.getElementById('invoice-date-display');
-  if (dDisp) dDisp.textContent = p.PAYMENT_DATE || new Date().toISOString().split('T')[0];
+  if (dDisp) dDisp.textContent = p.PAYMENT_DATE || localDateStr();
   const mName = document.getElementById('invoice-member-name');
   if (mName) mName.textContent = p.MEMBER_NAME || 'Registered Resident';
   const mEmail = document.getElementById('invoice-member-email');
@@ -1105,210 +1124,286 @@ async function deletePayment(id) {
 }
 
 // ====================================================================
-// VIEW 6: "TYPE QUERY & FETCH IT" SQL CONSOLE
+// VIEW 6 (DA-3): GRAPH EXPLORER, PRESET DEMOS & READ-ONLY CYPHER CONSOLE
+// Replaces the original Oracle SQL console. Presets come from the server
+// (GET /api/demos) so the UI always shows the Cypher that actually runs.
 // ====================================================================
 
-const PRESETS = {
-  rooms_and_spaces: `SELECT r.room_id, r.room_name, r.room_type, r.capacity, r.hourly_rate, s.space_name, s.city
-FROM MEETING_ROOMS r
-JOIN COWORKING_SPACES s ON r.space_id = s.space_id
-ORDER BY r.capacity DESC`,
-
-  active_bookings: `SELECT b.booking_id, p.first_name || ' ' || p.last_name as member_name, r.room_name, s.space_name, b.booking_date, b.start_time || ' - ' || b.end_time as slot, b.total_amount
-FROM BOOKINGS b
-JOIN MEMBERS m ON b.member_id = m.member_id
-JOIN PERSON p ON m.person_id = p.person_id
-JOIN MEETING_ROOMS r ON b.room_id = r.room_id
-JOIN COWORKING_SPACES s ON r.space_id = s.space_id
-WHERE b.status = 'CONFIRMED'
-ORDER BY b.booking_date ASC`,
-
-  revenue_by_room: `SELECT r.room_id, r.room_name, s.space_name, COUNT(b.booking_id) as total_bookings, NVL(SUM(b.total_amount), 0) as total_revenue
-FROM MEETING_ROOMS r
-JOIN COWORKING_SPACES s ON r.space_id = s.space_id
-LEFT JOIN BOOKINGS b ON r.room_id = b.room_id AND b.status = 'CONFIRMED'
-GROUP BY r.room_id, r.room_name, s.space_name
-ORDER BY total_revenue DESC`,
-
-  member_plans: `SELECT m.member_id, pr.first_name || ' ' || pr.last_name as member_name, pr.email, p.plan_name, p.monthly_fee
-FROM MEMBERS m
-JOIN PERSON pr ON m.person_id = pr.person_id
-JOIN MEMBERSHIP_PLANS p ON m.plan_id = p.plan_id
-ORDER BY p.monthly_fee DESC`,
-
-  room_facilities: `SELECT r.room_name, f.facility_name, f.quantity
-FROM ROOM_FACILITIES f
-JOIN MEETING_ROOMS r ON f.room_id = r.room_id
-ORDER BY r.room_name, f.facility_name`,
-
-  eer_hierarchy: `SELECT e.employee_id, pe.first_name || ' ' || pe.last_name as employee_name, e.job_title, e.salary, NVL(ps.first_name || ' ' || ps.last_name, 'TOP DIRECTOR') as supervised_by
-FROM EMPLOYEES e
-JOIN PERSON pe ON e.person_id = pe.person_id
-LEFT JOIN EMPLOYEES s ON e.supervisor_id = s.employee_id
-LEFT JOIN PERSON ps ON s.person_id = ps.person_id
-ORDER BY e.employee_id ASC`,
-
-  all_tables: `SELECT table_name, num_rows, status FROM user_tables ORDER BY table_name`,
-
-  partial_dependency_demo: `/* ====================================================================
-   VIVA DEMO 1: PARTIAL DEPENDENCY (1NF VIOLATION)
-   Table: DEMO_1NF_PARTIAL_DEP
-   Composite Primary Key: (room_id, facility_id)
-   VIOLATION: room_id -> (room_name, hourly_rate) depends on PART of PK!
-   Notice how room details repeat for room 301 below across facilities:
-   ==================================================================== */
-SELECT room_id, facility_id, room_name, hourly_rate, facility_name, quantity
-FROM DEMO_1NF_PARTIAL_DEP
-ORDER BY room_id, facility_id`,
-
-  transitive_dependency_demo: `/* ====================================================================
-   VIVA DEMO 2: TRANSITIVE DEPENDENCY (2NF VIOLATION)
-   Table: DEMO_2NF_TRANSITIVE_DEP
-   Primary Key: member_id (Satisfies 2NF)
-   VIOLATION: member_id -> plan_id -> (plan_name, monthly_fee, duration)
-   Non-key attribute (plan_id) determines other non-key attributes!
-   Notice how plan 203 repeats monthly_fee 35000 for multiple members:
-   ==================================================================== */
-SELECT member_id, member_name, email, plan_id, plan_name, monthly_fee, duration_months
-FROM DEMO_2NF_TRANSITIVE_DEP
-ORDER BY plan_id, member_id`,
-
-  normalized_proof: `/* ====================================================================
-   FINAL 3NF / BCNF FULLY NORMALIZED SCHEMA PROOF
-   Zero Partial & Zero Transitive Dependencies!
-   All entities decoupled & retrieved dynamically via Foreign Keys:
-   ==================================================================== */
-SELECT m.member_id, p.first_name || ' ' || p.last_name as member_name, 
-       pl.plan_name, pl.monthly_fee, 
-       r.room_name, r.hourly_rate, f.facility_name
-FROM MEMBERS m
-JOIN PERSON p ON m.person_id = p.person_id
-JOIN MEMBERSHIP_PLANS pl ON m.plan_id = pl.plan_id
-JOIN BOOKINGS b ON m.member_id = b.member_id
-JOIN MEETING_ROOMS r ON b.room_id = r.room_id
-JOIN ROOM_FACILITIES f ON r.room_id = f.room_id
-WHERE ROWNUM <= 10
-ORDER BY m.member_id`
+const LABEL_COLORS = {
+  Member: '#0A5BEB', Employee: '#7c3aed', Person: '#64748b', CoworkingSpace: '#0f766e',
+  MeetingRoom: '#0284c7', Facility: '#94a3b8', FacilityCategory: '#d97706', Organization: '#db2777',
+  Booking: '#16a34a', Payment: '#ca8a04', MembershipPlan: '#475569'
 };
 
-const NORMALIZATION_EXPLANATIONS = {
-  partial_dependency_demo: {
-    title: "1NF Violation: Partial Dependency Demonstration",
-    iconBg: "bg-amber-100 text-amber-700",
-    icon: "fa-triangle-exclamation",
-    cardBorder: "bg-amber-50/70 border-amber-200 text-amber-950",
-    desc: "In table <code>DEMO_1NF_PARTIAL_DEP</code>, the primary key is composite: <code>(room_id, facility_id)</code>. Non-key attributes <code>room_name</code> and <code>hourly_rate</code> depend ONLY on <code>room_id</code> (a proper subset of the composite PK), violating 2NF and causing repetitive data anomalies.",
-    fds: [
-      "• (room_id, facility_id) → quantity  [Full Functional Dependency]",
-      "• room_id → (room_name, hourly_rate) [🚨 PARTIAL DEPENDENCY]",
-      "• facility_id → facility_name       [🚨 PARTIAL DEPENDENCY]"
-    ],
-    solution: "<strong>2NF Normalization Fix:</strong> Decomposed into <code>MEETING_ROOMS(room_id, ...)</code> and <code>ROOM_FACILITIES(facility_id, room_id, facility_name, quantity)</code>."
-  },
-  transitive_dependency_demo: {
-    title: "2NF Violation: Transitive Dependency Demonstration",
-    iconBg: "bg-purple-100 text-purple-700",
-    icon: "fa-code-branch",
-    cardBorder: "bg-purple-50/70 border-purple-200 text-purple-950",
-    desc: "In table <code>DEMO_2NF_TRANSITIVE_DEP</code>, the primary key is atomic: <code>member_id</code> (satisfies 2NF). However, <code>member_id → plan_id</code>, and <code>plan_id → (plan_name, monthly_fee)</code>. Non-key attribute <code>plan_id</code> determines other non-key attributes, creating a Transitive Dependency and update anomalies.",
-    fds: [
-      "• member_id → (member_name, email, plan_id)   [Direct Dependency]",
-      "• plan_id → (plan_name, monthly_fee, duration) [Non-Key determines Non-Key]",
-      "• 🚨 Transitive Path: member_id → plan_id → (plan_name, monthly_fee)"
-    ],
-    solution: "<strong>3NF Normalization Fix:</strong> Decomposed into <code>MEMBERS(member_id, person_id, plan_id, ...)</code> and <code>MEMBERSHIP_PLANS(plan_id, plan_name, monthly_fee, ...)</code>."
-  },
-  normalized_proof: {
-    title: "Final 3NF / BCNF Fully Normalized Schema Proof",
-    iconBg: "bg-emerald-100 text-emerald-700",
-    icon: "fa-circle-check",
-    cardBorder: "bg-emerald-50/70 border-emerald-200 text-emerald-950",
-    desc: "All partial dependencies and transitive dependencies have been removed. Every non-key attribute depends directly on candidate keys (Primary Keys). Data integrity is preserved across relations via Foreign Keys with zero update/deletion anomalies.",
-    fds: [
-      "• 1NF: All attribute values are strictly atomic.",
-      "• 2NF: No partial dependencies (all tables use single-attribute primary keys).",
-      "• 3NF & BCNF: No transitive dependencies (every determinant is a candidate key)."
-    ],
-    solution: "<strong>Status:</strong> Complies 100% with Third Normal Form (3NF) & Boyce-Codd Normal Form (BCNF)."
-  }
-};
+let demoState = { list: [], selected: null };
+let graphNetwork = null;
 
-function loadPresetQuery(key) {
-  const sql = PRESETS[key];
-  if (sql) {
-    document.getElementById('sql-input').value = sql;
+function primaryLabel(labels) {
+  const order = ['Member', 'Employee', 'CoworkingSpace', 'MeetingRoom', 'FacilityCategory', 'Facility',
+    'Organization', 'Booking', 'Payment', 'MembershipPlan', 'Person'];
+  return order.find(l => (labels || []).includes(l)) || (labels || [])[0] || 'Node';
+}
 
-    // Check if there is an explanation card
-    const card = document.getElementById('normalization-viva-card');
-    const exp = NORMALIZATION_EXPLANATIONS[key];
-    if (card && exp) {
-      card.className = `mb-6 rounded-3xl p-5 border transition-all duration-300 ${exp.cardBorder}`;
-      document.getElementById('norm-card-icon').className = `h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 text-lg ${exp.iconBg}`;
-      document.getElementById('norm-card-icon').innerHTML = `<i class="fa-solid ${exp.icon}"></i>`;
-      document.getElementById('norm-card-title').textContent = exp.title;
-      document.getElementById('norm-card-desc').innerHTML = exp.desc;
-      document.getElementById('norm-card-fds').innerHTML = exp.fds.map(f => `<div>${f}</div>`).join('');
-      document.getElementById('norm-card-solution').innerHTML = exp.solution;
-      card.classList.remove('hidden');
-    } else if (card) {
-      card.classList.add('hidden');
+// ---------- Live connection badge ----------
+async function checkDatabaseHealth() {
+  const dot = document.getElementById('db-status-dot');
+  const label = document.getElementById('db-status-label');
+  const card = document.getElementById('db-health-card');
+  try {
+    const res = await fetch(`${API_BASE}/health`);
+    const h = await res.json();
+    if (h.status !== 'UP') throw new Error(h.error || 'Neo4j is DOWN');
+    if (dot) dot.className = 'h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse';
+    if (label) label.textContent = h.database.replace(/ \(.*\)/, '');
+    if (card) {
+      card.innerHTML = `<span class="text-emerald-600 font-bold">● CONNECTED</span> ${esc(h.database)}<br>
+        ${esc(h.connectivity)} • ${esc(h.uri)} • db "${esc(h.databaseName)}" • ${esc(h.nodeCount)} nodes`;
     }
-
-    executeCustomQuery();
+  } catch (err) {
+    if (dot) dot.className = 'h-1.5 w-1.5 rounded-full bg-rose-500';
+    if (label) label.textContent = 'Neo4j: offline';
+    if (card) card.innerHTML = `<span class="text-rose-600 font-bold">● NOT CONNECTED</span> ${esc(err.message)}`;
   }
 }
 
+// The original buttons called openNewBookingModal(), which did not exist in app.js.
+// DA-3: new bookings are made through the slot picker + checkout flow.
+function openNewBookingModal() {
+  openSlotPickerForRoom(state.selectedTimelineRoomId);
+  showToast('Pick a room, date and free slots, then press "Configure & Checkout".', 'info');
+}
+
+// ---------- DA-3 room recommendation (timeline view) ----------
+async function loadFacilityCategories() {
+  try {
+    const res = await fetch(`${API_BASE}/graph/meta`);
+    const data = await res.json();
+    const select = document.getElementById('rec-category');
+    if (data.success && select) {
+      select.innerHTML = '<option value="">Any</option>' +
+        data.categories.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+    }
+  } catch (err) {
+    console.error('Failed to load facility categories:', err);
+  }
+}
+
+async function runRoomRecommendation() {
+  const box = document.getElementById('rec-results');
+  const toHHMM = v => (v || '').slice(0, 5);
+  const body = {
+    date: state.timelineDate,
+    start_time: toHHMM(document.getElementById('rec-start').value),
+    end_time: toHHMM(document.getElementById('rec-end').value),
+    min_capacity: document.getElementById('rec-capacity').value || 0,
+    category: document.getElementById('rec-category').value
+  };
+  box.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running Cypher on Neo4j...';
+  try {
+    const res = await fetch(`${API_BASE}/demos/room_recommendation`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.success) {
+      box.innerHTML = `<span class="text-rose-600 font-semibold">${esc(data.error)}</span>`;
+      return;
+    }
+    if (!data.rows.length) {
+      box.innerHTML = `No free room matches on ${esc(body.date)} ${esc(body.start_time)}-${esc(body.end_time)}.`;
+      return;
+    }
+    box.innerHTML = `
+      <div class="mb-2 text-slate-500">${data.rowCount} free room(s) on <strong>${esc(body.date)}</strong>
+        ${esc(body.start_time)}-${esc(body.end_time)} • ${data.executionTimeMs} ms</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        ${data.rows.map(r => `
+          <div class="p-3 rounded-2xl border border-slate-200 bg-slate-50">
+            <div class="font-bold text-slate-900">${esc(r.room_name)}</div>
+            <div class="text-[11px] text-slate-500">${esc(r.space_name)} • ${esc(r.room_type)}</div>
+            <div class="text-[11px] mt-1">${esc(r.capacity)} pax • ₹${Number(r.hourly_rate).toFixed(0)}/hr •
+              est. ₹${Number(r.estimated_cost).toFixed(0)} • ${esc(r.popularity)} past bookings</div>
+            <button onclick="openSlotPickerForRoom(${Number(r.room_id)})" class="mt-2 px-3 py-1.5 bg-appspace-blue text-white rounded-lg text-[11px] font-bold">Open slot picker</button>
+          </div>`).join('')}
+      </div>`;
+  } catch (err) {
+    box.innerHTML = `<span class="text-rose-600 font-semibold">${esc(err.message)}</span>`;
+  }
+}
+
+// ---------- Preset demos ----------
+async function loadDemoPresets() {
+  const container = document.getElementById('demo-preset-groups');
+  if (!container) return;
+  try {
+    const res = await fetch(`${API_BASE}/demos`);
+    const data = await res.json();
+    demoState.list = data.data || [];
+    const groups = {};
+    demoState.list.forEach(d => { (groups[d.group] = groups[d.group] || []).push(d); });
+    const styles = {
+      'Original DA-II queries in Cypher': 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200',
+      'DA-3 graph traversals': 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200',
+      'DA-3 facility categories (enhancement)': 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
+    };
+    container.innerHTML = Object.entries(groups).map(([group, demos]) => `
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">${esc(group)}</div>
+        <div class="flex flex-wrap gap-2">
+          ${demos.map(d => `<button onclick="selectDemo('${esc(d.key)}')" title="${esc(d.description)}"
+              class="px-3.5 py-2 text-xs font-bold rounded-xl transition border ${styles[group] || styles['Original DA-II queries in Cypher']}">${esc(d.title)}</button>`).join('')}
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    container.innerHTML = `<span class="text-rose-600">Failed to load presets: ${esc(err.message)}</span>`;
+  }
+}
+
+function selectDemo(key, autoRun = true) {
+  const d = demoState.list.find(x => x.key === key);
+  if (!d) return;
+  demoState.selected = d;
+  document.getElementById('demo-title').textContent = d.title;
+  document.getElementById('demo-description').textContent = d.description;
+  document.getElementById('demo-sql-label').textContent = d.sqlSource === 'original'
+    ? 'Original DA-II SQL / PL-SQL (Oracle)'
+    : 'Equivalent SQL (written for DA-3 comparison - not in the original project)';
+  document.getElementById('demo-sql').textContent = d.sql;
+  document.getElementById('demo-cypher').textContent = d.cypher;
+  document.getElementById('demo-params').innerHTML = d.params.map(p => {
+    const type = p.type === 'date' ? 'date' : (p.type === 'time' ? 'time' : (p.type === 'category' ? 'text' : 'number'));
+    return `<label class="flex flex-col text-[11px] font-bold text-slate-600">${esc(p.label)}
+      <input data-param="${esc(p.name)}" type="${type}" value="${esc(p.default)}" ${type === 'time' ? 'step="60"' : ''}
+        class="mt-1 bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-900 w-40"></label>`;
+  }).join('');
+  document.getElementById('demo-detail-card').classList.remove('hidden');
+  if (autoRun) runSelectedDemo();
+}
+
+function collectDemoParams() {
+  const params = {};
+  document.querySelectorAll('#demo-params [data-param]').forEach(input => {
+    let v = input.value;
+    if (input.type === 'time') v = v.slice(0, 5);
+    params[input.dataset.param] = v;
+  });
+  return params;
+}
+
+async function runSelectedDemo() {
+  const d = demoState.selected;
+  if (!d) return;
+  const meta = document.getElementById('query-execution-meta');
+  meta.textContent = `Running preset "${d.title}" on Neo4j...`;
+  try {
+    const res = await fetch(`${API_BASE}/demos/${encodeURIComponent(d.key)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(collectDemoParams())
+    });
+    const data = await res.json();
+    if (data.success) {
+      renderQueryOutput(data, `Preset "${d.title}"`);
+    } else {
+      showQueryError(data.error, data.executionTimeMs);
+    }
+  } catch (err) {
+    showQueryError(err.message);
+  }
+}
+
+// Console queries cannot take $parameters, so literal values are substituted.
+function copyDemoToConsole() {
+  const d = demoState.selected;
+  if (!d) return;
+  const params = collectDemoParams();
+  let text = d.cypher;
+  d.params.forEach(p => {
+    const raw = params[p.name];
+    const literal = ['id', 'int', 'number'].includes(p.type) ? String(Number(raw)) : `'${String(raw).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    text = text.replace(new RegExp(`\\$${p.name}\\b`, 'g'), literal);
+  });
+  document.getElementById('cypher-input').value = text;
+  document.getElementById('cypher-input').focus();
+  showToast('Preset copied into the console with literal values. Press Execute.', 'info');
+}
+
+// ---------- Custom read-only console ----------
 async function executeCustomQuery() {
-  const sqlInput = document.getElementById('sql-input').value.trim();
+  const cypherInput = document.getElementById('cypher-input').value.trim();
   const meta = document.getElementById('query-execution-meta');
   const btn = document.getElementById('btn-run-query');
-  const outputContainer = document.getElementById('query-output-container');
-  const errorContainer = document.getElementById('query-error-container');
-  const errorText = document.getElementById('query-error-text');
 
-  if (!sqlInput) {
-    showToast('Please type a SQL query first!', 'error');
+  if (!cypherInput) {
+    showToast('Please type a Cypher query first!', 'error');
     return;
   }
 
   btn.disabled = true;
-  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Executing on Oracle...`;
-  meta.textContent = 'Query running on Oracle 21c...';
-  outputContainer.classList.add('hidden');
-  errorContainer.classList.add('hidden');
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Executing on Neo4j...`;
+  meta.textContent = 'Query running on Neo4j (READ transaction)...';
 
   try {
     const res = await fetch(`${API_BASE}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sql: sqlInput })
+      body: JSON.stringify({ cypher: cypherInput })
     });
-
     const data = await res.json();
-    btn.disabled = false;
-    btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> Run Query (Fetch)`;
-
     if (data.success) {
-      meta.textContent = `Completed in ${data.executionTimeMs} ms | ${data.rowCount} rows returned`;
-      renderQueryResults(data.columns, data.rows);
-      outputContainer.classList.remove('hidden');
-
-      if (/^\s*(INSERT|UPDATE|DELETE)/i.test(sqlInput)) {
-        showToast('Database updated via SQL query!', 'success');
-        refreshAllData();
-      }
+      renderQueryOutput(data, 'Console query');
     } else {
-      meta.textContent = `Failed in ${data.executionTimeMs || 0} ms`;
-      errorText.textContent = data.error || 'SQL Execution error';
-      errorContainer.classList.remove('hidden');
+      showQueryError(data.error, data.executionTimeMs);
     }
   } catch (err) {
+    showQueryError(err.message);
+  } finally {
     btn.disabled = false;
-    btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> Run Query (Fetch)`;
-    meta.textContent = 'Execution failed';
-    errorText.textContent = err.message;
-    errorContainer.classList.remove('hidden');
+    btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> Execute Query (Fetch)`;
   }
+}
+
+function showQueryError(message, ms) {
+  document.getElementById('query-execution-meta').textContent = `Failed${ms !== undefined ? ` in ${ms} ms` : ''}`;
+  document.getElementById('query-error-text').textContent = message || 'Cypher execution error';
+  document.getElementById('query-error-container').classList.remove('hidden');
+  document.getElementById('query-output-container').classList.add('hidden');
+}
+
+function renderQueryOutput(data, source) {
+  document.getElementById('query-error-container').classList.add('hidden');
+  const meta = document.getElementById('query-execution-meta');
+  meta.textContent = `${source}: completed in ${data.executionTimeMs} ms | ${data.rowCount} rows` +
+    (data.truncated ? ` (truncated to ${data.rowCount})` : '') +
+    ` | ${data.graph ? data.graph.nodes.length : 0} graph nodes`;
+  renderQueryResults(data.columns || [], data.rows || []);
+  const executed = data.params && Object.keys(data.params).length
+    ? `${data.cypher}\n\n// parameters\n${JSON.stringify(data.params, null, 2)}`
+    : data.cypher;
+  document.getElementById('result-view-cypher').textContent = executed;
+  document.getElementById('query-output-container').classList.remove('hidden');
+  const hasGraph = data.graph && data.graph.nodes.length > 0;
+  setResultView(hasGraph ? 'graph' : 'table');
+  if (hasGraph) renderGraph(data.graph);
+}
+
+function formatCell(v) {
+  if (v === null || v === undefined) return '<span class="text-slate-400 italic">NULL</span>';
+  if (Array.isArray(v)) {
+    if (v.some(x => x && typeof x === 'object')) return v.map(formatCell).join(' ');
+    return esc(v.join(', '));
+  }
+  if (typeof v === 'object') {
+    if (v._type === 'node') {
+      const label = primaryLabel(v.labels);
+      const caption = v.properties.first_name ? `${v.properties.first_name} ${v.properties.last_name || ''}` :
+        (v.properties.room_name || v.properties.space_name || v.properties.organization_name || v.properties.plan_name ||
+         v.properties.facility_name || v.properties.name || (v.properties.booking_id ? `#${v.properties.booking_id}` : '') ||
+         (v.properties.payment_id ? `#${v.properties.payment_id}` : ''));
+      return `<span class="inline-block px-1.5 py-0.5 rounded text-white text-[10px]" style="background:${LABEL_COLORS[label] || '#64748b'}">:${esc(label)}</span> ${esc(caption)}`;
+    }
+    if (v._type === 'relationship') return `<span class="text-indigo-600">[:${esc(v.type)}]</span>`;
+    if (v._type === 'path') return `<span class="text-indigo-600">path (${v.relationships.length} hops)</span>`;
+    return esc(JSON.stringify(v));
+  }
+  return esc(v);
 }
 
 function renderQueryResults(columns, rows) {
@@ -1318,29 +1413,96 @@ function renderQueryResults(columns, rows) {
 
   if (!columns || columns.length === 0) {
     thead.innerHTML = '';
-    tbody.innerHTML = `<tr><td class="px-6 py-6 text-center text-slate-500 font-medium">Command executed successfully on Oracle 21c (no rows returned).</td></tr>`;
+    tbody.innerHTML = `<tr><td class="px-6 py-6 text-center text-slate-500 font-medium">Query executed on Neo4j (no rows returned).</td></tr>`;
     return;
   }
 
-  thead.innerHTML = `<tr class="bg-slate-50 border-b border-slate-200">${columns.map(c => `<th class="px-6 py-3 font-mono text-xs font-bold text-slate-700 uppercase tracking-wider text-left">${c}</th>`).join('')}</tr>`;
+  thead.innerHTML = `<tr class="bg-slate-50 border-b border-slate-200">${columns.map(c => `<th class="px-6 py-3 font-mono text-xs font-bold text-slate-700 uppercase tracking-wider text-left">${esc(c)}</th>`).join('')}</tr>`;
 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="${columns.length}" class="px-6 py-6 text-center text-slate-500 font-medium">0 rows returned from Oracle.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${columns.length}" class="px-6 py-6 text-center text-slate-500 font-medium">0 rows returned from Neo4j.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = rows.map(row => `
     <tr class="hover:bg-blue-50/50 border-b border-slate-100 transition">
-      ${columns.map(c => `<td class="px-6 py-3 font-mono text-xs text-slate-800">${row[c] !== null && row[c] !== undefined ? row[c] : '<span class="text-slate-400 italic">NULL</span>'}</td>`).join('')}
+      ${columns.map(c => `<td class="px-6 py-3 font-mono text-xs text-slate-800 align-top">${formatCell(row[c])}</td>`).join('')}
     </tr>
   `).join('');
 }
 
+function setResultView(view) {
+  ['table', 'graph', 'cypher'].forEach(v => {
+    document.getElementById(`result-view-${v}`).classList.toggle('hidden', v !== view);
+    const btn = document.getElementById(`result-view-btn-${v}`);
+    btn.className = `result-view-btn px-3 py-1.5 rounded-lg ${v === view ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'}`;
+  });
+  if (view === 'graph' && graphNetwork) setTimeout(() => graphNetwork.fit(), 50);
+}
+
+function renderGraph(graph) {
+  const canvas = document.getElementById('graph-canvas');
+  const legend = document.getElementById('graph-legend');
+  const selection = document.getElementById('graph-selection');
+  if (typeof vis === 'undefined') {
+    canvas.innerHTML = '<div class="p-6 text-xs text-rose-600">Graph library (vis-network) failed to load. Run "npm install" and reload.</div>';
+    return;
+  }
+  const usedLabels = new Set();
+  const nodes = graph.nodes.map(n => {
+    const label = primaryLabel(n.labels);
+    usedLabels.add(label);
+    return {
+      id: n.id, label: String(n.caption || label).slice(0, 28), group: label,
+      title: `:${n.labels.join(':')}`,
+      color: { background: LABEL_COLORS[label] || '#64748b', border: '#0f172a' },
+      font: { color: '#0f172a', size: 12 }, shape: 'dot', size: label === 'Facility' ? 8 : 14
+    };
+  });
+  const edges = graph.edges.map(e => ({
+    id: e.id, from: e.from, to: e.to, label: e.type, arrows: 'to',
+    font: { size: 9, color: '#475569', strokeWidth: 0 }, color: { color: '#94a3b8' }, smooth: { type: 'dynamic' }
+  }));
+  legend.innerHTML = [...usedLabels].map(l =>
+    `<span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full" style="background:${LABEL_COLORS[l] || '#64748b'}"></span>${esc(l)}</span>`).join('') +
+    `<span class="ml-auto text-slate-400 font-normal">${nodes.length} nodes • ${edges.length} relationships</span>`;
+  if (graphNetwork) graphNetwork.destroy();
+  graphNetwork = new vis.Network(canvas, { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) }, {
+    physics: { stabilization: { iterations: 200 }, barnesHut: { springLength: 110 } },
+    interaction: { hover: true, tooltipDelay: 150 }
+  });
+  const byId = new Map(graph.nodes.map(n => [n.id, n]));
+  const edgeById = new Map(graph.edges.map(e => [e.id, e]));
+  graphNetwork.on('click', params => {
+    if (params.nodes.length) {
+      const n = byId.get(params.nodes[0]);
+      selection.textContent = `(:${n.labels.join(':')}) ${JSON.stringify(n.properties)}`;
+    } else if (params.edges.length) {
+      const e = edgeById.get(params.edges[0]);
+      selection.textContent = `[:${e.type}] ${JSON.stringify(e.properties)}`;
+    }
+  });
+}
+
+async function loadGraphOverview() {
+  const meta = document.getElementById('query-execution-meta');
+  meta.textContent = 'Loading the whole WorkSphere graph from Neo4j...';
+  const started = Date.now();
+  try {
+    const res = await fetch(`${API_BASE}/graph/overview`);
+    const data = await res.json();
+    if (!data.success) return showQueryError(data.error);
+    renderQueryOutput({ ...data, executionTimeMs: Date.now() - started, columns: [], rows: [], rowCount: 0 }, 'Whole graph');
+  } catch (err) {
+    showQueryError(err.message);
+  }
+}
+
 // Shortcuts & Startup
 document.addEventListener('DOMContentLoaded', () => {
-  const sqlInput = document.getElementById('sql-input');
-  if (sqlInput) {
-    sqlInput.addEventListener('keydown', (e) => {
+  const cypherInput = document.getElementById('cypher-input');
+  if (cypherInput) {
+    cypherInput.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         executeCustomQuery();
@@ -1350,6 +1512,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   refreshAllData();
   resetHeroSlideTimer();
+  // DA-3 additions
+  checkDatabaseHealth();
+  loadDemoPresets();
+  loadFacilityCategories();
 });
 
 
@@ -1378,7 +1544,7 @@ const HERO_SLIDES = [
   {
     kicker: "PREMIUM COWORKING & FLEX SPACES",
     title: `Your Digital Journey <br class="hidden sm:inline"><span class="text-white">Starts With Us</span>`,
-    desc: "Experience Flexible Desk Plans, 4K Video Conferencing Hubs, and Instant Hourly Bookings with Real-Time Oracle Database Sync.",
+    desc: "Experience Flexible Desk Plans, 4K Video Conferencing Hubs, and Instant Hourly Bookings with Real-Time Neo4j Graph Database Sync.",
     bg: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=2000&q=80",
     ctaText: "Book a Room",
     ctaAction: () => switchTab('timeline')
@@ -1502,27 +1668,27 @@ function renderManageRoomsTable() {
 
   tbody.innerHTML = rooms.map(r => `
     <tr class="hover:bg-blue-50/40 border-b border-slate-100 transition">
-      <td class="px-6 py-4 font-mono font-bold text-blue-600">#${r.ROOM_ID}</td>
-      <td class="px-6 py-4 font-bold text-slate-900">${r.ROOM_NAME}</td>
-      <td class="px-6 py-4 text-slate-600">${r.SPACE_NAME || '-'}</td>
+      <td class="px-6 py-4 font-mono font-bold text-blue-600">#${esc(r.ROOM_ID)}</td>
+      <td class="px-6 py-4 font-bold text-slate-900">${esc(r.ROOM_NAME)}</td>
+      <td class="px-6 py-4 text-slate-600">${esc(r.SPACE_NAME || '-')}</td>
       <td class="px-6 py-4">
         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-          ${r.ROOM_TYPE}
+          ${esc(r.ROOM_TYPE)}
         </span>
       </td>
-      <td class="px-6 py-4 font-bold text-slate-700">${r.CAPACITY} pax</td>
+      <td class="px-6 py-4 font-bold text-slate-700">${esc(r.CAPACITY)} pax</td>
       <td class="px-6 py-4 font-bold text-emerald-600 font-mono">₹${Number(r.HOURLY_RATE).toFixed(2)}/hr</td>
       <td class="px-6 py-4">
         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${r.STATUS === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-          ${r.STATUS}
+          ${esc(r.STATUS)}
         </span>
       </td>
       <td class="px-6 py-4 text-right">
         <div class="flex items-center justify-end gap-2">
-          <button onclick="openEditRoomModal(${r.ROOM_ID})" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200 transition">
+          <button onclick="openEditRoomModal(${esc(r.ROOM_ID)})" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold border border-amber-200 transition">
             Update
           </button>
-          <button onclick="deleteRoom(${r.ROOM_ID})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-semibold border border-rose-200 transition">
+          <button onclick="deleteRoom(${esc(r.ROOM_ID)})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg text-xs font-semibold border border-rose-200 transition">
             Delete
           </button>
         </div>
@@ -1546,18 +1712,18 @@ async function renderEmployeesTable() {
       }
       tbody.innerHTML = emps.map(e => `
         <tr class="hover:bg-purple-50/40 border-b border-slate-100 transition">
-          <td class="px-6 py-4 font-mono font-bold text-purple-700">#${e.EMPLOYEE_ID}</td>
-          <td class="px-6 py-4 font-bold text-slate-900">${e.EMPLOYEE_NAME || (e.FIRST_NAME + ' ' + e.LAST_NAME)}</td>
-          <td class="px-6 py-4 font-medium text-slate-700">${e.JOB_TITLE}</td>
+          <td class="px-6 py-4 font-mono font-bold text-purple-700">#${esc(e.EMPLOYEE_ID)}</td>
+          <td class="px-6 py-4 font-bold text-slate-900">${esc(e.EMPLOYEE_NAME || (e.FIRST_NAME + ' ' + e.LAST_NAME))}</td>
+          <td class="px-6 py-4 font-medium text-slate-700">${esc(e.JOB_TITLE)}</td>
           <td class="px-6 py-4 font-bold text-emerald-600 font-mono">₹${Number(e.SALARY).toFixed(2)}/mo</td>
           <td class="px-6 py-4 font-semibold text-indigo-700">
-            ${e.SUPERVISOR_NAME ? '<i class="fa-solid fa-arrow-turn-up text-[10px] mr-1 text-slate-400"></i>' + e.SUPERVISOR_NAME : '<span class="text-xs text-slate-400 italic font-normal">Top Director (Root)</span>'}
+            ${e.SUPERVISOR_NAME ? '<i class="fa-solid fa-arrow-turn-up text-[10px] mr-1 text-slate-400"></i>' + esc(e.SUPERVISOR_NAME) : '<span class="text-xs text-slate-400 italic font-normal">Top Director (Root)</span>'}
           </td>
-          <td class="px-6 py-4 font-mono text-xs text-slate-500">${e.EMAIL || '-'}</td>
+          <td class="px-6 py-4 font-mono text-xs text-slate-500">${esc(e.EMAIL || '-')}</td>
         </tr>
       `).join('');
     }
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-rose-500">Failed to load employees: ${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-rose-500">Failed to load employees: ${esc(err.message)}</td></tr>`;
   }
 }

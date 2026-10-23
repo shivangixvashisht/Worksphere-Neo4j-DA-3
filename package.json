@@ -31,7 +31,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "neo4j-driver": "^5.28.1"
+    "neo4j-driver": "^5.28.1",
+    "vis-network": "^9.1.9"
   },
   "devDependencies": {
     "supertest": "^7.0.0"

@@ -36,6 +36,8 @@ function createApp() {
 
   // Serve frontend static files
   app.use(express.static(path.join(__dirname, '../frontend')));
+  // vis-network is served from node_modules so the graph view works without a CDN
+  app.use('/vendor/vis-network', express.static(path.join(__dirname, '../node_modules/vis-network/standalone/umd')));
 
   // API Routes (same paths as the original project)
   app.use('/api/spaces', require('./routes/spaces'));
