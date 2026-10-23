@@ -1,0 +1,39 @@
+{
+  "name": "worksphere-neo4j-da3",
+  "version": "1.0.0",
+  "description": "WorkSphere DA-3: the WorkSphere meeting-room & coworking platform extended with the Neo4j graph database",
+  "main": "backend/server.js",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "db:check": "node backend/scripts/check-connection.js",
+    "seed": "node backend/scripts/seed.js",
+    "db:reset": "node backend/scripts/seed.js --reset-only",
+    "test": "node --test tests/unit/",
+    "test:integration": "node --test --test-concurrency=1 tests/integration/",
+    "test:all": "npm test && npm run test:integration"
+  },
+  "keywords": [
+    "neo4j",
+    "cypher",
+    "graph-database",
+    "worksphere",
+    "dbms",
+    "da-3"
+  ],
+  "author": "WorkSphere Team",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "neo4j-driver": "^5.28.1"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}
