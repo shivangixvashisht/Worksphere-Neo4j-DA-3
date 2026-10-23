@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkSphere | Smart Meeting Room & Workspace Scheduling</title>
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e'
+            },
+            appspace: {
+              blue: '#0A5BEB',
+              navy: '#060E1C',
+              softblue: '#F0F6FE',
+              accent: '#1C7BE3'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-appspace-blue selection:text-white">
+
+  <!-- Floating Dark Pill Navigation Bar (ZESTY Style) -->
+  <header class="fixed top-4 inset-x-0 z-50 px-4 sm:px-6 pointer-events-none">
+    <div class="max-w-6xl mx-auto zesty-navbar rounded-2xl px-5 sm:px-6 py-3 flex items-center justify-between pointer-events-auto">
+      
+      <!-- Brand Logo (ZESTY Style) -->
+      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('dashboard')">
+        <span class="text-xl sm:text-2xl font-black tracking-widest text-white uppercase font-sans">
+          WORK<span class="text-sky-400">SPHERE</span>
+        </span>
+        <span class="h-2 w-2 rounded-full bg-sky-400"></span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1 lg:space-x-1.5 text-xs font-semibold">
+        <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="nav-tab active px-3.5 py-1.5 transition">Home</button>
+        <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="nav-tab px-3.5 py-1.5 transition">Services</button>
+        <button onclick="switchTab('timeline')" id="tab-btn-timeline" class="nav-tab px-3.5 py-1.5 transition">Portfolio</button>
+        <button onclick="switchTab('members')" id="tab-btn-members" class="nav-tab px-3.5 py-1.5 transition">Team</button>
+        <button onclick="switchTab('payments')" id="tab-btn-payments" class="nav-tab px-3.5 py-1.5 transition">Pricing</button>
+        <button onclick="switchTab('query')" id="tab-btn-query" class="nav-tab px-3.5 py-1.5 transition text-indigo-400 hover:text-indigo-300">Blog / SQL</button>
+      </nav>
+
+      <!-- Right Action Pill Button (ZESTY Cyan CTA) -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden lg:flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Oracle 21c</span>
+        </div>
+        <button onclick="openNewBookingModal()" class="zesty-btn-cyan flex items-center gap-2">
+          <span>Contact</span>
+        </button>
+        <!-- Mobile Menu Toggle Button -->
+        <button onclick="document.getElementById('mobile-nav-menu')?.classList.toggle('hidden')" class="md:hidden text-slate-300 hover:text-white p-1.5 rounded-lg text-sm bg-white/5 border border-white/10" aria-label="Toggle menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation Menu -->
+    <div id="mobile-nav-menu" class="hidden md:hidden max-w-6xl mx-auto mt-2 zesty-navbar rounded-2xl p-4 flex flex-col gap-1.5 pointer-events-auto border border-white/15 shadow-2xl">
+      <button onclick="switchTab('dashboard'); document.getElementById('mobile-nav-menu').classList.add('hidden')" class="text-left px-3.5 py-2 text-white text-xs font-semibold hover:bg-white/10 rounded-xl transition flex items-center justify-between">
+        <span>Home</span> <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+      </button>
+      <button onclick="switchTab('catalog'); document.getElementById('mobile-nav-menu').classList.add('hidden')" class="text-left px-3.5 py-2 text-white text-xs font-semibold hover:bg-white/10 rounded-xl transition flex items-center justify-between">
+        <span>Services (Rooms & Spaces)</span> <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+      </button>
+      <button onclick="switchTab('timeline'); document.getElementById('mobile-nav-menu').classList.add('hidden')" class="text-left px-3.5 py-2 text-white text-xs font-semibold hover:bg-white/10 rounded-xl transition flex items-center justify-between">
+        <span>Portfolio (Schedule Matrix)</span> <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+      </button>
+      <button onclick="switchTab('members'); document.getElementById('mobile-nav-menu').classList.add('hidden')" class="text-left px-3.5 py-2 text-white text-xs font-semibold hover:bg-white/10 rounded-xl transition flex items-center justify-between">
+        <span>Team (Members & Roles)</span> <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+      </button>
+      <button onclick="switchTab('payments'); document.getElementById('mobile-nav-menu').classList.add('hidden')" class="text-left px-3.5 py-2 text-white text-xs font-semibold hover:bg-white/10 rounded-xl transition flex items-center justify-between">
+        <span>Pricing (Billing & Invoices)</span> <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+      </button>
+      <button onclick="switchTab('query'); document.getElementById('mobile-nav-menu').classList.add('hidden')" class="text-left px-3.5 py-2 text-sky-400 text-xs font-semibold hover:bg-white/10 rounded-xl transition flex items-center justify-between">
+        <span>Blog / SQL Console</span> <i class="fa-solid fa-chevron-right text-[10px] text-sky-400"></i>
+      </button>
+    </div>
+    </div>
+  </header>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="fixed top-24 right-6 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none"></div>
+
+  <!-- Main Content Container (Full Width Base) -->
+  <main class="flex-1 w-full">
+
+    <!-- ============================================================= -->
+    <!-- VIEW 1: HERO & DASHBOARD OVERVIEW                             -->
+    <!-- ============================================================= -->
+    <section id="tab-dashboard" class="tab-content">
+      
+      <!-- Full-Screen Viewport Visual Hero Banner (Exact Match with Image 1) -->
+      <div class="zesty-hero-fullscreen">
+        <!-- Ambient Background Image (Centered in the Middle) -->
+        <div id="hero-bg-image" class="zesty-hero-bg" style="background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=2400&q=85');"></div>
+        <div class="zesty-hero-overlay"></div>
+        
+        <!-- Top Spacer for Floating Fixed Navbar -->
+        <div class="h-24 sm:h-32"></div>
+
+        <!-- Right Side Settings Gear Widget (Exact Match with Image 1) -->
+        <div class="absolute right-0 top-1/2 -translate-y-1/2 z-20 hidden sm:flex">
+          <button onclick="switchTab('catalog')" class="h-11 w-11 bg-sky-500 hover:bg-sky-400 text-white rounded-l-2xl flex items-center justify-center shadow-2xl transition transform hover:scale-105" title="Explore Floor Plan & Settings">
+            <i class="fa-solid fa-gear text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Hero Content Centered Exactly in the Middle (Matching Image 1) -->
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-8 max-w-4xl mx-auto text-white my-auto">
+          
+          <!-- Top Subtitle Kicker (Matching Image 1) -->
+          <span id="hero-kicker-text" class="text-xs sm:text-sm font-bold tracking-[0.28em] text-slate-200 uppercase mb-4 font-mono transition-all duration-300 drop-shadow">
+            ALL IN ONE SOLUTION FOR YOU
+          </span>
+
+          <!-- Main Bold Headline (Matching Image 1) -->
+          <h1 id="hero-main-title" class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.12] mb-5 transition-all duration-300 drop-shadow-lg">
+            Elevating Brands, Driving <br class="hidden sm:inline">
+            <span class="text-white">Success</span>
+          </h1>
+
+          <!-- Paragraph Description (Matching Image 1) -->
+          <p id="hero-desc-text" class="text-slate-200 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mb-9 font-normal transition-all duration-300 drop-shadow">
+            Empowering Brands with Innovative Design, Cutting-Edge Technology, and Strategic Marketing to Drive Business Growth and Success.
+          </p>
+
+          <!-- Central CTA Button (Matching Image 1) -->
+          <div class="flex flex-col sm:flex-row items-center gap-3.5">
+            <button id="hero-cta-btn" onclick="switchTab('catalog')" class="px-8 py-3.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xl shadow-sky-500/40 transition transform hover:-translate-y-0.5">
+              View Portfolio
+            </button>
+            <button onclick="switchTab('timeline')" class="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl text-xs sm:text-sm font-bold backdrop-blur-md transition">
+              Hourly Schedule Matrix
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Carousel Indicators (Matching Image 1) -->
+        <div class="relative z-10 pb-8 sm:pb-10 flex items-center justify-center gap-2.5">
+          <span onclick="setHeroSlide(0)" class="hero-dot h-1.5 w-6 rounded-full bg-sky-400 cursor-pointer transition-all duration-300"></span>
+          <span onclick="setHeroSlide(1)" class="hero-dot h-1.5 w-1.5 rounded-full bg-white/40 cursor-pointer hover:bg-white transition-all duration-300"></span>
+          <span onclick="setHeroSlide(2)" class="hero-dot h-1.5 w-1.5 rounded-full bg-white/40 cursor-pointer hover:bg-white transition-all duration-300"></span>
+        </div>
+      </div>
+
+      <!-- Dashboard Content Container (Max-Width 7xl) -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Sleek Zesty Quick Space Search & Filter Bar (Floating -mt-12) -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xl shadow-slate-300/50 mb-14 -mt-12 sm:-mt-14 max-w-4xl mx-auto relative z-20">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Campus Hub</label>
+            <select id="hero-hub-select" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-sky-500 focus:bg-white transition">
+              <option value="ALL">All Chennai Locations</option>
+              <option value="Guindy">Guindy Industrial Estate</option>
+              <option value="OMR">OMR IT Expressway</option>
+              <option value="Anna Nagar">Anna Nagar West</option>
+              <option value="T. Nagar">T. Nagar Commercial</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Room Category</label>
+            <select id="hero-type-select" class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-sky-500 focus:bg-white transition">
+              <option value="ALL">All Categories</option>
+              <option value="Conference Room">Conference Room</option>
+              <option value="Meeting Pod">Meeting Pod</option>
+              <option value="Boardroom Elite">Boardroom Elite</option>
+              <option value="Hot Desk Lounge">Hot Desk Lounge</option>
+              <option value="Training Hall">Training Hall</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button onclick="handleHeroSearch()" class="w-full bg-sky-500 hover:bg-sky-400 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow-md shadow-sky-500/25 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-magnifying-glass"></i> Find & Book Space
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SECTION: OUR SERVICES (EXACT MATCH WITH IMAGE 2)              -->
+      <!-- ============================================================= -->
+      <div class="mb-14">
+        <!-- Section Title & Subtitle Centered -->
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Our Services</h2>
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+            Zesty is a dynamic IT agency specializing in effective design solutions. We blend creativity with technology.
+          </p>
+        </div>
+
+        <!-- 3 Minimalist Service Cards Row (Matching Image 2) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          
+          <!-- Service Card 1: UI/UX & Acoustic Meeting Pods -->
+          <div class="zesty-service-card group">
+            <div class="zesty-icon-container">
+              <i class="fa-solid fa-shapes text-slate-700"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-900 mb-2">UI/UX</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-6">
+              Designing seamless experiences that connect users with your brand.
+            </p>
+            <div class="space-y-2 border-t border-slate-100 pt-4">
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>User-Centred Design</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Simplicity</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Responsiveness</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Consistency</span>
+              </div>
+            </div>
+            <div class="mt-6 pt-2">
+              <button onclick="filterRoomsByType('Meeting Pod')" class="text-xs font-bold text-sky-500 hover:text-sky-600 flex items-center gap-1.5">
+                <span>Explore Acoustic Pods</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Service Card 2: Design & Executive Boardrooms -->
+          <div class="zesty-service-card group">
+            <div class="zesty-icon-container">
+              <i class="fa-solid fa-pen-nib text-slate-700"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-900 mb-2">Design</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-6">
+              Web design is the process of planning and creating the visual layout.
+            </p>
+            <div class="space-y-2 border-t border-slate-100 pt-4">
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>SEO-Friendly</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Visual Consistency</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Responsive Design</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Performance Oriented</span>
+              </div>
+            </div>
+            <div class="mt-6 pt-2">
+              <button onclick="filterRoomsByType('Boardroom Elite')" class="text-xs font-bold text-sky-500 hover:text-sky-600 flex items-center gap-1.5">
+                <span>Explore Executive Boardrooms</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Service Card 3: Development & Hot Desk Lounges -->
+          <div class="zesty-service-card group">
+            <div class="zesty-icon-container">
+              <i class="fa-solid fa-code text-slate-700"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-900 mb-2">Development</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-6">
+              Web development is the process of building, designing, and maintaining websites.
+            </p>
+            <div class="space-y-2 border-t border-slate-100 pt-4">
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Performance</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Security</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Front-End</span>
+              </div>
+              <div class="zesty-check-item">
+                <span class="zesty-check-icon"><i class="fa-solid fa-check"></i></span>
+                <span>Back-End</span>
+              </div>
+            </div>
+            <div class="mt-6 pt-2">
+              <button onclick="filterRoomsByType('Hot Desk Lounge')" class="text-xs font-bold text-sky-500 hover:text-sky-600 flex items-center gap-1.5">
+                <span>Explore Hot Desks</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quick Stats Strip -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Hub Locations</span>
+            <div class="h-10 w-10 rounded-xl bg-blue-50 text-appspace-blue flex items-center justify-center text-base"><i class="fa-solid fa-city"></i></div>
+          </div>
+          <div class="text-3xl font-black text-slate-900" id="stat-spaces">-</div>
+          <p class="text-xs text-slate-500 mt-1">Chennai Metro Hub Network</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Available Rooms</span>
+            <div class="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base"><i class="fa-solid fa-door-open"></i></div>
+          </div>
+          <div class="text-3xl font-black text-slate-900" id="stat-rooms">-</div>
+          <p class="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1"><i class="fa-solid fa-check text-[10px]"></i> Live in Oracle DB</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Confirmed Bookings</span>
+            <div class="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base"><i class="fa-solid fa-calendar-check"></i></div>
+          </div>
+          <div class="text-3xl font-black text-slate-900" id="stat-bookings">-</div>
+          <p class="text-xs text-slate-500 mt-1">Enforced by Overlap Trigger</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Invoiced</span>
+            <div class="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+          </div>
+          <div class="text-3xl font-black text-slate-900" id="stat-revenue">-</div>
+          <p class="text-xs text-slate-500 mt-1">Aggregated Settlement Total</p>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SECTION: ABOUT WORKSPHERE & PLATFORM CAPABILITIES            -->
+      <!-- ============================================================= -->
+      <div class="mb-14">
+        <div class="text-center max-w-3xl mx-auto mb-10">
+          <span class="text-xs font-bold text-appspace-blue uppercase tracking-wider px-3 py-1 bg-blue-50 rounded-full border border-blue-200">Engineered for Modern Collaboration</span>
+          <h2 class="text-3xl font-extrabold text-slate-900 mt-3">Why Industry Leaders Choose WorkSphere</h2>
+          <p class="text-sm text-slate-600 mt-2">A high-performance workspace infrastructure combining architectural spatial floor maps with ACID-compliant Oracle relational database technology.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Feature Card 1 -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition group">
+            <div class="h-44 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="2D Floor Layout" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+              <span class="absolute bottom-3 left-3 bg-blue-600 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg">Spatial Engine</span>
+            </div>
+            <div class="p-6">
+              <h3 class="font-bold text-slate-900 text-base mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-map text-appspace-blue"></i> 2D Interactive Layouts
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Clickable architectural floor maps displaying live occupancy statuses. Select rooms spatially and reserve with one click.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature Card 2 -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition group">
+            <div class="h-44 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80" alt="PL/SQL Overlap Shield" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+              <span class="absolute bottom-3 left-3 bg-emerald-600 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg">Zero Conflicts</span>
+            </div>
+            <div class="p-6">
+              <h3 class="font-bold text-slate-900 text-base mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-emerald-600"></i> PL/SQL Overlap Shield
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Our Oracle trigger <code class="text-appspace-blue font-mono font-bold">TRG_CHECK_ROOM_OVERLAP</code> intercepts double-booking collisions before they commit.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature Card 3 -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition group">
+            <div class="h-44 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=800&q=80" alt="4K AV Suites" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+              <span class="absolute bottom-3 left-3 bg-indigo-600 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg">Cisco & Polycom</span>
+            </div>
+            <div class="p-6">
+              <h3 class="font-bold text-slate-900 text-base mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-video text-indigo-600"></i> 4K Telepresence AV
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Rooms equipped with 75" 4K HDR displays, Polycom Studio video bars, and gigabit WiFi for seamless hybrid conferences.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature Card 4 -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition group">
+            <div class="h-44 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80" alt="Instant Invoicing" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+              <span class="absolute bottom-3 left-3 bg-amber-600 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg">Atomic Billing</span>
+            </div>
+            <div class="p-6">
+              <h3 class="font-bold text-slate-900 text-base mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-amber-600"></i> Instant Settlement
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Settlement via UPI, Credit/Debit cards, Net Banking, and Corporate Billing with automated GST computation and receipts.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SECTION: CHENNAI COWORKING HUBS NETWORK (PHOTO CARDS)         -->
+      <!-- ============================================================= -->
+      <div class="mb-14">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
+          <div>
+            <span class="text-xs font-bold text-appspace-blue uppercase tracking-wider px-3 py-1 bg-blue-50 rounded-full border border-blue-200">Campus Network</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Explore Our Chennai Hub Locations</h2>
+            <p class="text-xs text-slate-500">Click any campus to view available meeting suites and live availability.</p>
+          </div>
+          <button onclick="switchTab('catalog')" class="text-xs font-bold text-appspace-blue hover:text-blue-800 flex items-center gap-1">
+            View All Rooms on Map <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Hub 1: Guindy -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition flex flex-col justify-between">
+            <div>
+              <div class="h-48 overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80" alt="Guindy Hub" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">Guindy Estate</span>
+              </div>
+              <div class="p-5">
+                <h3 class="font-extrabold text-slate-900 text-base">Nexus WorkHub</h3>
+                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-rose-500"></i> Mount Road, Guindy, Chennai</p>
+                <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-600">
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Conference Suites</span>
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Brainstorm Pods</span>
+                </div>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <button onclick="filterByCampus('Guindy')" class="w-full py-2.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-appspace-blue font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
+                <span>Explore Guindy Hub</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hub 2: OMR IT Expressway -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition flex flex-col justify-between">
+            <div>
+              <div class="h-48 overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" alt="OMR Hub" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">Sholinganallur</span>
+              </div>
+              <div class="p-5">
+                <h3 class="font-extrabold text-slate-900 text-base">Innovate Hub</h3>
+                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-rose-500"></i> Rajiv Gandhi Salai, OMR, Chennai</p>
+                <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-600">
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Boardroom Elite</span>
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Hot Desks</span>
+                </div>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <button onclick="filterByCampus('OMR')" class="w-full py-2.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-appspace-blue font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
+                <span>Explore OMR Hub</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hub 3: Anna Nagar West -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition flex flex-col justify-between">
+            <div>
+              <div class="h-48 overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=800&q=80" alt="Anna Nagar Hub" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">Anna Nagar</span>
+              </div>
+              <div class="p-5">
+                <h3 class="font-extrabold text-slate-900 text-base">Synergy Spaces</h3>
+                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-rose-500"></i> 2nd Avenue, Block AB, Anna Nagar</p>
+                <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-600">
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Training Halls</span>
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">40-Seat Seminar</span>
+                </div>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <button onclick="filterByCampus('Anna Nagar')" class="w-full py-2.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-appspace-blue font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
+                <span>Explore Anna Nagar Hub</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hub 4: T. Nagar Commercial -->
+          <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl transition flex flex-col justify-between">
+            <div>
+              <div class="h-48 overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80" alt="T. Nagar Hub" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">T. Nagar</span>
+              </div>
+              <div class="p-5">
+                <h3 class="font-extrabold text-slate-900 text-base">Venture Loft</h3>
+                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-rose-500"></i> Venkatanarayana Road, T. Nagar</p>
+                <div class="flex items-center gap-2 mt-3 text-[11px] text-slate-600">
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Zenith Suite</span>
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-semibold">Creative Lofts</span>
+                </div>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <button onclick="filterByCampus('T. Nagar')" class="w-full py-2.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-appspace-blue font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
+                <span>Explore T. Nagar Hub</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SECTION: HOW WORKSPHERE WORKS (3 STEPS)                       -->
+      <!-- ============================================================= -->
+      <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-8 sm:p-12 mb-14 shadow-xl">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+          <span class="text-xs font-bold text-blue-400 uppercase tracking-wider px-3 py-1 bg-white/10 rounded-full border border-white/10">Effortless Workflow</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold mt-3">Book Any Room in 3 Simple Steps</h2>
+          <p class="text-xs text-slate-400 mt-2">No phone calls, no double-booking delays. Guaranteed database transaction safety.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center backdrop-blur-md">
+            <div class="h-14 w-14 rounded-2xl bg-blue-600 text-white font-black text-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">1</div>
+            <h4 class="font-bold text-base mb-2">Select Hub & Room</h4>
+            <p class="text-xs text-slate-400">Choose between Boardroom, Conference, Pods or Lounges on the interactive 2D layout map.</p>
+          </div>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center backdrop-blur-md">
+            <div class="h-14 w-14 rounded-2xl bg-indigo-600 text-white font-black text-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">2</div>
+            <h4 class="font-bold text-base mb-2">Lock Your Hourly Slot</h4>
+            <p class="text-xs text-slate-400">Select any window from 08:00 to 20:00 on the live availability calendar matrix.</p>
+          </div>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 text-center backdrop-blur-md">
+            <div class="h-14 w-14 rounded-2xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">3</div>
+            <h4 class="font-bold text-base mb-2">Instant Confirmation</h4>
+            <p class="text-xs text-slate-400">Settle via UPI or Card. Oracle atomic transaction commits your reservation and generates invoice.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid (Live Reservations & Member Credit Hub) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left: Member Credits & Quick Search (1 Col) -->
+        <div class="space-y-6">
+          
+          <!-- Modern Member Badge & Credit Hours Card -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-appspace-blue to-indigo-600 flex items-center justify-center text-white font-extrabold text-base shadow-md shadow-blue-500/20">
+                  <i class="fa-solid fa-user text-base"></i>
+                </div>
+                <div>
+                  <h4 class="font-extrabold text-slate-900 text-sm">Resident Member</h4>
+                  <span class="text-[11px] text-slate-500 font-medium">Dedicated Workspace Plan (202)</span>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>
+            </div>
+
+            <!-- Credits Bar -->
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2 mb-4">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500 font-medium">Meeting Room Credits</span>
+                <span class="font-extrabold text-slate-900"><span class="text-appspace-blue">14.5</span> / 20.0 hrs left</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-appspace-blue to-indigo-600 h-2.5 rounded-full" style="width: 72%"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Plan Renewal</span>
+                <span class="font-bold text-slate-700">01-Oct-2026</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Lounge Perks</span>
+                <span class="font-bold text-emerald-600">Free Specialty Coffee</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Booking Finder Widget -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fa-solid fa-bolt text-amber-500 text-sm"></i>
+              <h3 class="font-extrabold text-slate-900 text-sm">Instant Space Finder</h3>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">Lock an available slot in 3 clicks</p>
+            
+            <form onsubmit="handleQuickFilter(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Select Campus</label>
+                <select id="quick-hub" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-appspace-blue focus:bg-white transition">
+                  <option value="">All Chennai Locations</option>
+                  <option value="Guindy">Guindy Industrial Estate</option>
+                  <option value="OMR">OMR IT Expressway</option>
+                  <option value="Anna Nagar">Anna Nagar West</option>
+                  <option value="T. Nagar">T. Nagar</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Space Category</label>
+                <select id="quick-type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-appspace-blue focus:bg-white transition">
+                  <option value="">Any Space Type</option>
+                  <option value="Conference Room">Conference Suite (8-16 pax)</option>
+                  <option value="Meeting Pod">Acoustic Meeting Pod (1-4 pax)</option>
+                  <option value="Boardroom Elite">Executive Boardroom (24 pax)</option>
+                  <option value="Hot Desk Lounge">Hot Desk Collaborative Lounge</option>
+                  <option value="Training Hall">Training & Seminar Hall</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Target Date</label>
+                <input type="date" id="quick-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:border-appspace-blue focus:bg-white transition">
+              </div>
+
+              <button type="submit" class="w-full py-3 bg-appspace-blue hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 mt-2">
+                <i class="fa-solid fa-magnifying-glass text-xs"></i> Check Immediate Availability
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- Right: Active Reservations & Live Oracle Feed (2 Cols) -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Active Reservations Card Feed -->
+          <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base">Your Active Reservations</h3>
+                <p class="text-xs text-slate-500">Synchronized live from Oracle table <code class="text-appspace-blue font-mono font-semibold">BOOKINGS</code></p>
+              </div>
+              <button onclick="openNewBookingModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus text-[10px]"></i> New Reservation
+              </button>
+            </div>
+
+            <!-- List of reservation cards -->
+            <div id="dashboard-bookings-list" class="space-y-3">
+              <div class="text-center py-8 text-slate-400 text-xs">Loading active reservations from Oracle...</div>
+            </div>
+          </div>
+
+          <!-- Feature Highlights (Appspace inspired) -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-start gap-3.5">
+              <div class="h-10 w-10 rounded-xl bg-blue-50 text-appspace-blue flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-shield-halved text-base"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-xs">PL/SQL Overlap Shield</h4>
+                <p class="text-[11px] text-slate-500 mt-0.5">Automated database trigger rejects conflicting room bookings.</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-start gap-3.5">
+              <div class="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-wifi text-base"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-xs">4K AV & Telepresence</h4>
+                <p class="text-[11px] text-slate-500 mt-0.5">High-speed displays & Cisco conferencing units ready in every suite.</p>
+              </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-start gap-3.5">
+              <div class="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-bolt text-base"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-xs">Zero Hardcoding</h4>
+                <p class="text-[11px] text-slate-500 mt-0.5">Every space, fee, and reservation is fetched dynamically via Oracle JDBC.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- VIEW 2: SPACES CATALOG & INTERACTIVE FLOOR PLAN               -->
+    <!-- ============================================================= -->
+    <section id="tab-catalog" class="tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <span class="text-xs font-bold text-appspace-blue uppercase tracking-wider">Spatial Navigator & Floor Plan</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Explore Meeting Spaces & Layouts</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Browse available private offices, boardrooms, and pods. Toggle between the live 2D architectural map and catalog cards.</p>
+        </div>
+
+        <!-- View Switcher & Action Button -->
+        <div class="flex items-center gap-3">
+          <div class="bg-slate-200/70 p-1 rounded-2xl flex items-center border border-slate-300/60">
+            <button onclick="toggleCatalogView('grid')" id="view-btn-grid" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition flex items-center gap-1.5">
+              <i class="fa-solid fa-grip"></i> Card Catalog
+            </button>
+            <button onclick="toggleCatalogView('map')" id="view-btn-map" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-map"></i> 2D Floor Plan
+            </button>
+          </div>
+          <button onclick="openNewRoomModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-2xl text-xs font-bold transition flex items-center gap-2 shadow-xs">
+            <i class="fa-solid fa-plus text-appspace-blue"></i> Add Room (Insert)
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Controls Bar -->
+      <div class="bg-white rounded-3xl p-5 mb-8 border border-slate-200/80 shadow-xs space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          
+          <!-- Category Pills -->
+          <div class="flex flex-wrap items-center gap-2" id="room-type-filter-pills">
+            <button onclick="filterRoomsByType('ALL')" class="room-pill active px-4 py-2 rounded-full text-xs font-bold bg-appspace-blue text-white shadow-xs">All Spaces</button>
+            <button onclick="filterRoomsByType('Conference Room')" class="room-pill px-4 py-2 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Conference Rooms</button>
+            <button onclick="filterRoomsByType('Meeting Pod')" class="room-pill px-4 py-2 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Meeting Pods</button>
+            <button onclick="filterRoomsByType('Boardroom Elite')" class="room-pill px-4 py-2 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Boardrooms</button>
+            <button onclick="filterRoomsByType('Hot Desk Lounge')" class="room-pill px-4 py-2 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Hot Desks</button>
+            <button onclick="filterRoomsByType('Training Hall')" class="room-pill px-4 py-2 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Training Halls</button>
+          </div>
+
+          <!-- Location Selector -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500 font-bold">Campus:</span>
+            <select id="filter-hub" onchange="applyRoomFilters()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-appspace-blue">
+              <option value="ALL">All Chennai Locations</option>
+              <option value="Guindy">Guindy</option>
+              <option value="OMR">OMR</option>
+              <option value="Anna Nagar">Anna Nagar</option>
+              <option value="T. Nagar">T. Nagar</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Amenity Filter Chips & Capacity Select -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-slate-500 font-bold mr-1">Required Amenities:</span>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 cursor-pointer hover:bg-slate-100 font-medium">
+              <input type="checkbox" value="Display" onchange="applyRoomFilters()" class="amenity-checkbox rounded border-slate-300 text-appspace-blue focus:ring-0"> 📽️ 4K Display
+            </label>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 cursor-pointer hover:bg-slate-100 font-medium">
+              <input type="checkbox" value="Video" onchange="applyRoomFilters()" class="amenity-checkbox rounded border-slate-300 text-appspace-blue focus:ring-0"> 📹 Video Conf
+            </label>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 cursor-pointer hover:bg-slate-100 font-medium">
+              <input type="checkbox" value="Whiteboard" onchange="applyRoomFilters()" class="amenity-checkbox rounded border-slate-300 text-appspace-blue focus:ring-0"> 📝 Whiteboard
+            </label>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 cursor-pointer hover:bg-slate-100 font-medium">
+              <input type="checkbox" value="Projector" onchange="applyRoomFilters()" class="amenity-checkbox rounded border-slate-300 text-appspace-blue focus:ring-0"> 📽️ Laser Projector
+            </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-slate-500 font-bold">Min Capacity:</span>
+            <select id="filter-capacity" onchange="applyRoomFilters()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-appspace-blue">
+              <option value="0">Any Capacity</option>
+              <option value="1">1 - 4 Pax (Pods)</option>
+              <option value="8">8 - 16 Pax (Conferences)</option>
+              <option value="20">20+ Pax (Boardrooms)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW A: 2D ARCHITECTURAL FLOOR PLAN (Clean White Blueprint) -->
+      <div id="catalog-map-view" class="hidden mb-10">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs relative">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-appspace-blue"></i>
+                Guindy Hub Architecture (Level 3 Interactive Floor Plan)
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Click any labeled room zone to immediately launch its hourly reservation schedule.</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+              <span class="flex items-center gap-1.5 text-emerald-700"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Available</span>
+              <span class="flex items-center gap-1.5 text-amber-700"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Reserved</span>
+              <span class="flex items-center gap-1.5 text-slate-500"><span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span> Common Areas</span>
+            </div>
+          </div>
+
+          <!-- Clean White Architectural SVG -->
+          <div class="w-full overflow-x-auto bg-slate-50 p-6 rounded-2xl border border-slate-200">
+            <svg viewBox="0 0 900 480" class="w-full max-w-4xl mx-auto h-auto select-none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="light-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+                </pattern>
+              </defs>
+              <rect width="900" height="480" fill="url(#light-grid)" rx="16"/>
+
+              <!-- Outer Wall -->
+              <rect x="20" y="20" width="860" height="440" fill="none" stroke="#94a3b8" stroke-width="3" rx="12"/>
+
+              <!-- Central Lounge -->
+              <rect x="360" y="180" width="180" height="120" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4" rx="8"/>
+              <text x="450" y="235" fill="#475569" font-size="12" font-family="Plus Jakarta Sans, sans-serif" font-weight="bold" text-anchor="middle">CENTRAL ATRIUM</text>
+              <text x="450" y="255" fill="#94a3b8" font-size="10" font-family="Plus Jakarta Sans, sans-serif" text-anchor="middle">Barista Lounge & Reception</text>
+
+              <!-- ZONE 1: Kaveri Conference Suite (Room 301) -->
+              <g class="floor-zone cursor-pointer" onclick="selectRoomFromMap(301)">
+                <rect x="40" y="40" width="300" height="160" fill="#ecfdf5" stroke="#10b981" stroke-width="2" rx="12"/>
+                <text x="190" y="90" fill="#065f46" font-size="14" font-weight="bold" font-family="Plus Jakarta Sans" text-anchor="middle">Kaveri Conference Suite</text>
+                <text x="190" y="115" fill="#047857" font-size="11" font-weight="bold" text-anchor="middle">16 Pax • ₹1,200/hr</text>
+                <rect x="130" y="130" width="120" height="22" fill="#10b981" rx="11"/>
+                <text x="190" y="145" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">CLICK TO BOOK</text>
+              </g>
+
+              <!-- ZONE 2: Vaigai Brainstorm Pod (Room 302) -->
+              <g class="floor-zone cursor-pointer" onclick="selectRoomFromMap(302)">
+                <rect x="40" y="220" width="170" height="120" fill="#ecfdf5" stroke="#10b981" stroke-width="2" rx="12"/>
+                <text x="125" y="270" fill="#065f46" font-size="12" font-weight="bold" font-family="Plus Jakarta Sans" text-anchor="middle">Vaigai Pod</text>
+                <text x="125" y="290" fill="#047857" font-size="10" text-anchor="middle">4 Pax • ₹450/hr</text>
+                <rect x="80" y="305" width="90" height="18" fill="#10b981" rx="9"/>
+                <text x="125" y="318" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">AVAILABLE</text>
+              </g>
+
+              <!-- ZONE 3: Silicon Boardroom Elite (Room 303) -->
+              <g class="floor-zone cursor-pointer" onclick="selectRoomFromMap(303)">
+                <rect x="560" y="40" width="300" height="170" fill="#ecfdf5" stroke="#10b981" stroke-width="2" rx="12"/>
+                <text x="710" y="95" fill="#065f46" font-size="14" font-weight="bold" font-family="Plus Jakarta Sans" text-anchor="middle">Silicon Boardroom Elite</text>
+                <text x="710" y="120" fill="#047857" font-size="11" font-weight="bold" text-anchor="middle">24 Pax • ₹2,500/hr</text>
+                <rect x="650" y="135" width="120" height="22" fill="#10b981" rx="11"/>
+                <text x="710" y="150" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">CLICK TO BOOK</text>
+              </g>
+
+              <!-- ZONE 4: Innovation Lounge Desks (Room 304) -->
+              <g class="floor-zone cursor-pointer" onclick="selectRoomFromMap(304)">
+                <rect x="560" y="230" width="300" height="100" fill="#ecfdf5" stroke="#10b981" stroke-width="2" rx="12"/>
+                <text x="710" y="275" fill="#065f46" font-size="13" font-weight="bold" font-family="Plus Jakarta Sans" text-anchor="middle">Innovation Lounge Desks</text>
+                <text x="710" y="295" fill="#047857" font-size="10" text-anchor="middle">10 Pax • ₹300/hr</text>
+              </g>
+
+              <!-- ZONE 5: Marina Training Hall (Room 305) -->
+              <g class="floor-zone cursor-pointer" onclick="selectRoomFromMap(305)">
+                <rect x="230" y="320" width="310" height="120" fill="#ecfdf5" stroke="#10b981" stroke-width="2" rx="12"/>
+                <text x="385" y="375" fill="#065f46" font-size="14" font-weight="bold" font-family="Plus Jakarta Sans" text-anchor="middle">Marina Training Hall</text>
+                <text x="385" y="395" fill="#047857" font-size="11" text-anchor="middle">40 Pax • ₹3,500/hr</text>
+              </g>
+
+              <!-- ZONE 6: Zenith Discussion Room (Room 306) -->
+              <g class="floor-zone cursor-pointer" onclick="selectRoomFromMap(306)">
+                <rect x="560" y="350" width="300" height="90" fill="#ecfdf5" stroke="#10b981" stroke-width="2" rx="12"/>
+                <text x="710" y="395" fill="#065f46" font-size="12" font-weight="bold" font-family="Plus Jakarta Sans" text-anchor="middle">Zenith Discussion Room</text>
+                <text x="710" y="415" fill="#047857" font-size="10" text-anchor="middle">8 Pax • ₹850/hr</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW B: GRID CATALOG CARDS -->
+      <div id="catalog-grid-view">
+        <div id="rooms-catalog-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200">
+            <i class="fa-solid fa-spinner fa-spin text-3xl text-appspace-blue mb-2"></i>
+            <p class="text-xs text-slate-500 font-medium">Loading spaces dynamically from Oracle Database...</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- VIEW 3: CALENDAR & TIME-SLOT TIMELINE PICKER                  -->
+    <!-- ============================================================= -->
+    <section id="tab-timeline" class="tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <span class="text-xs font-bold text-appspace-blue uppercase tracking-wider">Visual Schedule Matrix</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Real-Time Hourly Slot Picker</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Select a room and date to inspect live hourly availability. Booked slots are blocked automatically to guarantee zero double-bookings.</p>
+        </div>
+
+        <!-- Room Selector inside Timeline -->
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <select id="timeline-room-select" onchange="renderTimelineGrid()" class="bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-800 shadow-xs focus:outline-none focus:border-appspace-blue">
+          </select>
+        </div>
+      </div>
+
+      <!-- Date Navigator Ribbon -->
+      <div class="bg-white rounded-3xl p-5 mb-8 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <button onclick="shiftTimelineDate(-1)" class="h-9 w-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+          </button>
+          <input type="date" id="timeline-date-picker" onchange="renderTimelineGrid()" class="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+          <button onclick="shiftTimelineDate(1)" class="h-9 w-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition">
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+        </div>
+
+        <!-- Quick Jump Buttons -->
+        <div class="flex items-center gap-2 text-xs">
+          <button onclick="setTimelineDate('today')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Today</button>
+          <button onclick="setTimelineDate('tomorrow')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Tomorrow</button>
+          <button onclick="setTimelineDate('monday')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Next Week</button>
+        </div>
+
+        <!-- Slot Status Legend -->
+        <div class="flex items-center gap-4 text-xs font-bold">
+          <span class="flex items-center gap-1.5 text-emerald-700"><span class="h-2.5 w-2.5 rounded bg-emerald-500"></span> Available</span>
+          <span class="flex items-center gap-1.5 text-appspace-blue"><span class="h-2.5 w-2.5 rounded bg-appspace-blue"></span> Selected</span>
+          <span class="flex items-center gap-1.5 text-rose-600"><span class="h-2.5 w-2.5 rounded bg-rose-500"></span> Booked (Blocked)</span>
+        </div>
+      </div>
+
+      <!-- Hourly Timeline Block Matrix -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-slate-100 gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <span id="timeline-current-room-name">Loading space...</span>
+              <span id="timeline-current-rate" class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-appspace-blue font-bold border border-blue-200 font-mono">₹ 0/hr</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5" id="timeline-current-space-city">Guindy Industrial Estate, Chennai</p>
+          </div>
+          <div class="text-xs text-slate-500 font-medium">
+            Operating Hours: <span class="text-slate-900 font-bold font-mono">08:00 AM - 08:00 PM</span>
+          </div>
+        </div>
+
+        <!-- The Hourly Blocks Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3.5 mb-8" id="hourly-blocks-container">
+          <!-- Dynamically populated by JS -->
+        </div>
+
+        <!-- Selected Slot Summary & Checkout Launcher -->
+        <div class="bg-slate-50 border border-slate-200/80 p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="h-11 w-11 rounded-2xl bg-blue-100 text-appspace-blue flex items-center justify-center text-lg">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 font-medium">Selected Booking Slot:</div>
+              <div class="text-sm font-extrabold text-slate-900" id="timeline-selected-span">Click on free time slots above to select</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-5">
+            <div class="text-right">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Duration Base Total</div>
+              <div class="text-xl font-black text-slate-900" id="timeline-selected-price">₹ 0.00</div>
+            </div>
+            <button id="btn-proceed-checkout" onclick="launchCheckoutFromTimeline()" disabled class="px-6 py-3 bg-appspace-blue disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-blue-500/25 flex items-center gap-2">
+              <span>Configure & Checkout</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- VIEW 4: POST & MANAGE DATA HUB (CRUD FOR ROOMS & MEMBERS)    -->
+    <!-- ============================================================= -->
+    <section id="tab-members" class="tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs">
+        <div>
+          <span class="text-xs font-bold text-appspace-blue uppercase tracking-wider px-3 py-1 bg-blue-50 rounded-full border border-blue-200">Database Administration & CRUD Hub</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Post, Insert & Manage System Records</h2>
+          <p class="text-xs text-slate-500 mt-1">Real-time <strong class="text-slate-700">INSERT, UPDATE, DELETE</strong> controls synchronized live with Oracle Database 21c XE.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="openNewRoomModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Post Space (Insert)
+          </button>
+          <button onclick="openNewMemberModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+            <i class="fa-solid fa-user-plus"></i> Register Member (Insert)
+          </button>
+          <button onclick="openNewBookingModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/20 transition flex items-center gap-2">
+            <i class="fa-solid fa-calendar-plus"></i> New Booking (Insert)
+          </button>
+        </div>
+      </div>
+
+      <!-- Manage Sub-Tabs Switcher -->
+      <div class="flex items-center gap-2 mb-6 border-b border-slate-200/80 pb-4 overflow-x-auto">
+        <button onclick="switchManageSubTab('members')" id="manage-subtab-btn-members" class="manage-subtab-btn active px-4 py-2 rounded-xl text-xs font-bold bg-appspace-blue text-white shadow-xs transition flex items-center gap-2">
+          <i class="fa-solid fa-users"></i> Registered Members (PERSON -> MEMBER)
+        </button>
+        <button onclick="switchManageSubTab('rooms')" id="manage-subtab-btn-rooms" class="manage-subtab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-2">
+          <i class="fa-solid fa-door-open"></i> Meeting Rooms & Spaces
+        </button>
+        <button onclick="switchManageSubTab('employees')" id="manage-subtab-btn-employees" class="manage-subtab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-2">
+          <i class="fa-solid fa-sitemap"></i> Employees & Hierarchy (EER Supervises)
+        </button>
+      </div>
+
+      <!-- Sub-Tab 1: Members Table -->
+      <div id="manage-members-view" class="manage-view">
+        <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs">
+          <div class="p-5 bg-slate-50/80 border-b border-slate-200 flex justify-between items-center">
+            <div>
+              <h4 class="font-extrabold text-slate-900 text-sm">Members & Person Subclass Records</h4>
+              <p class="text-[11px] text-slate-500">Inherits name, address, email from <code class="text-appspace-blue font-mono font-bold">PERSON</code> table</p>
+            </div>
+            <button onclick="openNewMemberModal()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+              <i class="fa-solid fa-plus text-[10px]"></i> Add New Member
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 uppercase tracking-wider text-slate-500 border-b border-slate-200 text-[11px] font-bold">
+                <tr>
+                  <th class="px-6 py-4">Member ID</th>
+                  <th class="px-6 py-4">Full Name (PERSON)</th>
+                  <th class="px-6 py-4">Email Address</th>
+                  <th class="px-6 py-4">Phone</th>
+                  <th class="px-6 py-4">Plan & Fee</th>
+                  <th class="px-6 py-4">Join Date</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4 text-right">Actions (CRUD)</th>
+                </tr>
+              </thead>
+              <tbody id="members-table-body" class="divide-y divide-slate-100 font-sans">
+                <tr><td colspan="8" class="text-center py-8 text-slate-400">Loading members from Oracle...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-Tab 2: Rooms Management Table -->
+      <div id="manage-rooms-view" class="manage-view hidden">
+        <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs">
+          <div class="p-5 bg-slate-50/80 border-b border-slate-200 flex justify-between items-center">
+            <div>
+              <h4 class="font-extrabold text-slate-900 text-sm">Meeting Rooms & Spaces Catalog Records</h4>
+              <p class="text-[11px] text-slate-500">Live records from Oracle table <code class="text-appspace-blue font-mono font-bold">MEETING_ROOMS</code></p>
+            </div>
+            <button onclick="openNewRoomModal()" class="text-xs font-bold text-appspace-blue hover:text-blue-800 flex items-center gap-1">
+              <i class="fa-solid fa-plus text-[10px]"></i> Add New Room
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 uppercase tracking-wider text-slate-500 border-b border-slate-200 text-[11px] font-bold">
+                <tr>
+                  <th class="px-6 py-4">Room ID</th>
+                  <th class="px-6 py-4">Room Name</th>
+                  <th class="px-6 py-4">Campus Hub</th>
+                  <th class="px-6 py-4">Category</th>
+                  <th class="px-6 py-4">Capacity</th>
+                  <th class="px-6 py-4">Hourly Fee</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4 text-right">Actions (CRUD)</th>
+                </tr>
+              </thead>
+              <tbody id="manage-rooms-table-body" class="divide-y divide-slate-100 font-sans">
+                <tr><td colspan="8" class="text-center py-8 text-slate-400">Loading rooms from Oracle...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-Tab 3: Employees Hierarchy Table (EER Supervises) -->
+      <div id="manage-employees-view" class="manage-view hidden">
+        <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs">
+          <div class="p-5 bg-slate-50/80 border-b border-slate-200 flex justify-between items-center">
+            <div>
+              <h4 class="font-extrabold text-slate-900 text-sm">EER Employees & Recursive Supervises Hierarchy</h4>
+              <p class="text-[11px] text-slate-500">Demonstrates self-join relationship (<code class="text-appspace-blue font-mono font-bold">EMPLOYEES.supervisor_id -> EMPLOYEES.employee_id</code>)</p>
+            </div>
+            <span class="text-xs font-mono font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">1:N Recursive Relationship</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 uppercase tracking-wider text-slate-500 border-b border-slate-200 text-[11px] font-bold">
+                <tr>
+                  <th class="px-6 py-4">Emp ID</th>
+                  <th class="px-6 py-4">Employee Name (PERSON)</th>
+                  <th class="px-6 py-4">Job Title</th>
+                  <th class="px-6 py-4">Monthly Salary</th>
+                  <th class="px-6 py-4">Reports To (Supervisor)</th>
+                  <th class="px-6 py-4">Email</th>
+                </tr>
+              </thead>
+              <tbody id="manage-employees-table-body" class="divide-y divide-slate-100 font-sans">
+                <tr><td colspan="6" class="text-center py-8 text-slate-400">Loading employees from Oracle...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- VIEW 5: INVOICING & PAYMENTS                                  -->
+    <!-- ============================================================= -->
+    <section id="tab-payments" class="tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <span class="text-xs font-bold text-appspace-blue uppercase tracking-wider">Financial Transactions</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Invoices & Settlement Ledger</h2>
+          <p class="text-xs text-slate-500">Live records from Oracle table <code class="text-appspace-blue font-mono font-semibold">PAYMENTS</code></p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-50 uppercase tracking-wider text-slate-500 border-b border-slate-200 text-[11px] font-bold">
+              <tr>
+                <th class="px-6 py-4">Invoice #</th>
+                <th class="px-6 py-4">Booking Ref</th>
+                <th class="px-6 py-4">Member Name</th>
+                <th class="px-6 py-4">Space</th>
+                <th class="px-6 py-4">Amount Paid</th>
+                <th class="px-6 py-4">Payment Method</th>
+                <th class="px-6 py-4">Date</th>
+                <th class="px-6 py-4">Status</th>
+                <th class="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="payments-table-body" class="divide-y divide-slate-100 font-sans">
+              <tr><td colspan="9" class="text-center py-8 text-slate-400">Loading payment receipts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- VIEW 6: INTERACTIVE ORACLE SQL CONSOLE                        -->
+    <!-- ============================================================= -->
+    <section id="tab-query" class="tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-28">
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-1">
+          <div class="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="fa-solid fa-terminal text-base"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Interactive Oracle SQL Console</h2>
+            <p class="text-xs text-slate-500">"Type query and fetch it" - execute custom queries directly against Oracle 21c Database via SQL*Plus.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Faculty Presets -->
+      <div class="mb-5 bg-white border border-slate-200/80 p-5 rounded-3xl shadow-xs">
+        <span class="text-[11px] uppercase font-bold text-slate-500 tracking-wider block mb-2.5">
+          <i class="fa-solid fa-bolt text-amber-500 mr-1"></i> Faculty Evaluation Presets (Click to Auto-Load):
+        </span>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="loadPresetQuery('rooms_and_spaces')" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-xl transition border border-slate-200">JOIN: Rooms + Spaces</button>
+          <button onclick="loadPresetQuery('active_bookings')" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-xl transition border border-slate-200">JOIN: Bookings + Members</button>
+          <button onclick="loadPresetQuery('revenue_by_room')" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-xl transition border border-slate-200">GROUP BY: Revenue per Room</button>
+          <button onclick="loadPresetQuery('member_plans')" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-xl transition border border-slate-200">JOIN: Members + Plans</button>
+          <button onclick="loadPresetQuery('room_facilities')" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-xl transition border border-slate-200">Room Facilities</button>
+          <button onclick="loadPresetQuery('eer_hierarchy')" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-xs font-bold text-indigo-700 rounded-xl transition border border-indigo-200">EER: Employee Hierarchy</button>
+          <button onclick="loadPresetQuery('all_tables')" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 rounded-xl transition border border-slate-200">List All Schema Tables</button>
+        </div>
+
+        <!-- Normalization Viva Shortcuts (Partial & Transitive Dependencies) -->
+        <div class="mt-4 pt-3.5 border-t border-slate-100">
+          <span class="text-[11px] uppercase font-bold text-amber-700 tracking-wider block mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-graduation-cap text-amber-600"></i> Normalization Defense Shortcuts (Partial & Transitive Dependencies):
+          </span>
+          <div class="flex flex-wrap gap-2.5">
+            <button onclick="loadPresetQuery('partial_dependency_demo')" class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-xs font-bold text-amber-900 rounded-xl transition border border-amber-300 shadow-xs flex items-center gap-2">
+              <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>1. Partial Dependency (1NF Violation)</span>
+            </button>
+            <button onclick="loadPresetQuery('transitive_dependency_demo')" class="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-xs font-bold text-purple-900 rounded-xl transition border border-purple-300 shadow-xs flex items-center gap-2">
+              <span class="h-2 w-2 rounded-full bg-purple-500 animate-pulse"></span>
+              <span>2. Transitive Dependency (2NF Violation)</span>
+            </button>
+            <button onclick="loadPresetQuery('normalized_proof')" class="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-900 rounded-xl transition border border-emerald-300 shadow-xs flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i>
+              <span>3. Decomposed 3NF Normalized Schema</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Normalization Viva Explanation Banner -->
+      <div id="normalization-viva-card" class="hidden mb-6 rounded-3xl p-5 border transition-all duration-300">
+        <div class="flex items-start gap-4">
+          <div id="norm-card-icon" class="h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 text-lg"></div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <h4 id="norm-card-title" class="font-bold text-sm"></h4>
+              <button onclick="document.getElementById('normalization-viva-card').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xs font-bold">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <p id="norm-card-desc" class="text-xs text-slate-600 leading-relaxed mb-3"></p>
+            <div id="norm-card-fds" class="bg-white/80 rounded-xl p-3 border font-mono text-xs text-slate-800 space-y-1"></div>
+            <div id="norm-card-solution" class="mt-3 text-xs font-medium"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SQL Input Box -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl mb-6 text-white">
+        <div class="bg-slate-800 px-5 py-3 border-b border-slate-700 flex justify-between items-center text-xs text-slate-300">
+          <span class="font-mono flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span> Oracle SQL Query Editor (Ctrl + Enter to Run)
+          </span>
+          <span class="text-[11px] text-slate-400 font-mono">XEPDB1 / COWORKING_ADMIN</span>
+        </div>
+        <textarea id="sql-input" rows="5" class="w-full bg-slate-950 text-emerald-400 font-mono text-sm p-4 focus:outline-none focus:ring-1 focus:ring-appspace-blue selection:bg-blue-600 resize-y">SELECT r.room_id, r.room_name, r.room_type, r.capacity, r.hourly_rate, s.space_name, s.city
+FROM MEETING_ROOMS r
+JOIN COWORKING_SPACES s ON r.space_id = s.space_id
+ORDER BY r.capacity DESC</textarea>
+        <div class="bg-slate-800/80 px-5 py-3.5 border-t border-slate-700 flex justify-between items-center">
+          <div id="query-execution-meta" class="text-xs text-slate-400">Ready to execute query</div>
+          <button id="btn-run-query" onclick="executeCustomQuery()" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Execute Query (Fetch)
+          </button>
+        </div>
+      </div>
+
+      <!-- Query Output Container -->
+      <div id="query-output-container" class="hidden">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+            <i class="fa-solid fa-table text-appspace-blue"></i> Output Results (<span id="query-row-count">0</span> rows returned)
+          </h3>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+          <div class="overflow-x-auto max-h-[450px]">
+            <table class="w-full text-left text-xs text-slate-700 font-mono" id="query-result-table">
+              <thead class="bg-slate-50 uppercase tracking-wider text-slate-500 border-b border-slate-200 sticky top-0" id="query-table-head"></thead>
+              <tbody id="query-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Query Error Banner -->
+      <div id="query-error-container" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-5 text-rose-700 text-xs font-mono">
+        <div class="flex items-center gap-2 font-bold mb-1 text-rose-800"><i class="fa-solid fa-triangle-exclamation"></i> Oracle Execution Error:</div>
+        <div id="query-error-text"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- MODAL: CHECKOUT & CONFIRMATION MODAL                          -->
+  <!-- ============================================================= -->
+  <div id="checkout-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto border border-slate-100">
+      <button onclick="closeModal('checkout-modal')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      
+      <div class="flex items-center gap-3.5 mb-6">
+        <div class="h-12 w-12 rounded-2xl bg-blue-50 text-appspace-blue flex items-center justify-center text-xl shadow-xs">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900">Lock Space Reservation</h3>
+          <p class="text-xs text-slate-500">Configure meeting add-ons, promo discounts, and instant settlement</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Selected Space Card -->
+        <div class="bg-slate-50 border border-slate-200/80 p-5 rounded-2xl space-y-2 text-xs">
+          <span class="text-[10px] font-bold text-appspace-blue uppercase tracking-wider">Reserved Space</span>
+          <h4 class="text-base font-extrabold text-slate-900" id="checkout-room-name">-</h4>
+          <p class="text-slate-500" id="checkout-space-loc">-</p>
+          <div class="pt-3 border-t border-slate-200/80 space-y-1.5">
+            <div class="flex justify-between"><span class="text-slate-500">Target Date:</span><span class="font-bold text-slate-800" id="checkout-date">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Time Slot:</span><span class="font-bold text-appspace-blue" id="checkout-slot">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Duration:</span><span class="font-bold text-slate-800" id="checkout-duration">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Hourly Rate:</span><span class="font-bold text-emerald-600" id="checkout-rate">-</span></div>
+          </div>
+        </div>
+
+        <!-- Add-on Amenities Checklist -->
+        <div class="bg-slate-50 border border-slate-200/80 p-5 rounded-2xl space-y-2 text-xs">
+          <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Optional Meeting Services</span>
+          <div class="space-y-2 pt-1">
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-blue-300 transition">
+              <div class="flex items-center gap-2.5">
+                <input type="checkbox" id="addon-coffee" onchange="recalculateCheckoutTotal()" class="rounded border-slate-300 text-appspace-blue focus:ring-0">
+                <span class="font-medium text-slate-800">☕ Barista Coffee & Snacks</span>
+              </div>
+              <span class="text-emerald-600 font-bold">+₹200</span>
+            </label>
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-blue-300 transition">
+              <div class="flex items-center gap-2.5">
+                <input type="checkbox" id="addon-recording" onchange="recalculateCheckoutTotal()" class="rounded border-slate-300 text-appspace-blue focus:ring-0">
+                <span class="font-medium text-slate-800">📽️ 4K Cloud Recording</span>
+              </div>
+              <span class="text-emerald-600 font-bold">+₹500</span>
+            </label>
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-blue-300 transition">
+              <div class="flex items-center gap-2.5">
+                <input type="checkbox" id="addon-concierge" onchange="recalculateCheckoutTotal()" class="rounded border-slate-300 text-appspace-blue focus:ring-0">
+                <span class="font-medium text-slate-800">🧑‍💼 Dedicated IT Concierge</span>
+              </div>
+              <span class="text-emerald-600 font-bold">+₹600</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Promo Code Bar -->
+      <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex items-center gap-3 mb-6">
+        <i class="fa-solid fa-tag text-amber-500 text-sm ml-2"></i>
+        <input type="text" id="checkout-promo-input" placeholder="Promo code (Try: VIT2026 or STARTUP50)" class="bg-transparent border-none text-xs text-slate-900 font-bold focus:outline-none flex-1 uppercase">
+        <button type="button" onclick="applyPromoCode()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition">
+          Apply Promo
+        </button>
+      </div>
+
+      <!-- Payment Gateways -->
+      <div class="mb-6">
+        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-2">Select Payment Gateway</label>
+        <div class="grid grid-cols-4 gap-2.5">
+          <button type="button" onclick="selectPaymentMethod('UPI')" id="pay-btn-UPI" class="pay-method-btn active py-2.5 rounded-xl bg-appspace-blue text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-qrcode"></i> UPI
+          </button>
+          <button type="button" onclick="selectPaymentMethod('Credit Card')" id="pay-btn-CARD" class="pay-method-btn py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200">
+            <i class="fa-solid fa-credit-card"></i> Card
+          </button>
+          <button type="button" onclick="selectPaymentMethod('Net Banking')" id="pay-btn-NET" class="pay-method-btn py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200">
+            <i class="fa-solid fa-building-columns"></i> Net Banking
+          </button>
+          <button type="button" onclick="selectPaymentMethod('Corporate Account')" id="pay-btn-CORP" class="pay-method-btn py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200">
+            <i class="fa-solid fa-briefcase"></i> Corporate
+          </button>
+        </div>
+      </div>
+
+      <!-- Total Price & Final Authorization -->
+      <div class="pt-5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <div class="text-xs text-slate-500 font-medium">Grand Total (GST + Amenities Included):</div>
+          <div class="text-3xl font-black text-slate-900" id="checkout-grand-total">₹ 0.00</div>
+          <span id="checkout-discount-badge" class="text-[11px] text-emerald-600 font-bold hidden block"></span>
+        </div>
+        <button id="btn-confirm-payment" onclick="submitCompleteCheckout()" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm rounded-2xl shadow-xl shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check-double"></i> Authorize & Lock Space
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT MEETING ROOM (CRUD) -->
+  <div id="room-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100">
+      <div class="flex justify-between items-center mb-5">
+        <h3 id="room-modal-title" class="text-lg font-extrabold text-slate-900">Add Space (Insert)</h3>
+        <button onclick="closeModal('room-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="room-form" onsubmit="handleRoomSubmit(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="room-id">
+        <div>
+          <label class="block font-bold uppercase text-slate-600 mb-1">Campus Hub</label>
+          <select id="room-space-id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue"></select>
+        </div>
+        <div>
+          <label class="block font-bold uppercase text-slate-600 mb-1">Room Name</label>
+          <input type="text" id="room-name" required placeholder="e.g. Kaveri Conference Suite" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Category</label>
+            <select id="room-type" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+              <option value="Conference Room">Conference Room</option>
+              <option value="Meeting Pod">Meeting Pod</option>
+              <option value="Boardroom Elite">Boardroom Elite</option>
+              <option value="Hot Desk Lounge">Hot Desk Lounge</option>
+              <option value="Training Hall">Training Hall</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Status</label>
+            <select id="room-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+              <option value="AVAILABLE">AVAILABLE</option>
+              <option value="OCCUPIED">OCCUPIED</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Capacity (Persons)</label>
+            <input type="number" id="room-capacity" min="1" required placeholder="12" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Hourly Fee (₹)</label>
+            <input type="number" id="room-rate" min="1" step="0.5" required placeholder="1200" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeModal('room-modal')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">Cancel</button>
+          <button type="submit" id="room-submit-btn" class="px-5 py-2.5 bg-appspace-blue hover:bg-blue-700 text-white font-bold rounded-xl">Save Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT MEMBER (CRUD) -->
+  <div id="member-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100">
+      <div class="flex justify-between items-center mb-5">
+        <h3 id="member-modal-title" class="text-lg font-extrabold text-slate-900">Register Member (Insert)</h3>
+        <button onclick="closeModal('member-modal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="member-form" onsubmit="handleMemberSubmit(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="member-id">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">First Name</label>
+            <input type="text" id="member-first-name" required placeholder="Alex" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Last Name</label>
+            <input type="text" id="member-last-name" required placeholder="Chen" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold uppercase text-slate-600 mb-1">Email (Unique Constraint)</label>
+          <input type="email" id="member-email" required placeholder="alex.chen@example.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Phone Number</label>
+            <input type="text" id="member-phone" placeholder="+91 9876543210" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue">
+          </div>
+          <div>
+            <label class="block font-bold uppercase text-slate-600 mb-1">Membership Plan</label>
+            <select id="member-plan-id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-semibold focus:outline-none focus:border-appspace-blue"></select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeModal('member-modal')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">Cancel</button>
+          <button type="submit" id="member-submit-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">Save Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: VIEW TAX INVOICE & RECEIPT -->
+  <div id="invoice-view-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
+      <!-- Modal Close Button -->
+      <button onclick="closeModal('invoice-view-modal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Invoice Paper Header -->
+      <div class="flex items-start justify-between border-b border-slate-200/80 pb-5 mb-5">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold text-slate-900 tracking-tight">Work<span class="text-appspace-blue">Sphere</span></span>
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase font-mono">PAID & VERIFIED</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Tax Invoice & Coworking Facility Receipt</p>
+          <p class="text-[10px] text-slate-400 font-mono">GSTIN: 33AAACW9281Q1Z4 • CIN: U72900TN2026PTC049281</p>
+        </div>
+        <div class="text-right">
+          <div class="text-xs font-mono font-bold text-appspace-blue" id="invoice-id-display">INV-2026-8001</div>
+          <div class="text-[11px] text-slate-400 mt-0.5 font-mono" id="invoice-booking-ref">#BK-5001</div>
+          <div class="text-[10px] text-slate-500 mt-0.5" id="invoice-date-display">2026-10-22</div>
+        </div>
+      </div>
+
+      <!-- Bill To & Facility Meta -->
+      <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200/60">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Billed To (Member)</span>
+          <h4 class="font-bold text-slate-900 text-sm" id="invoice-member-name">Arjun Mehta</h4>
+          <p class="text-[11px] text-slate-500 font-mono" id="invoice-member-email">arjun.mehta@worksphere.io</p>
+          <span class="inline-block mt-1 text-[10px] font-semibold text-appspace-blue" id="invoice-org-name">Quantix AI Labs</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Facility & Campus</span>
+          <h4 class="font-bold text-slate-900 text-sm" id="invoice-room-title">Kaveri Conference Suite</h4>
+          <p class="text-[11px] text-slate-600" id="invoice-room-hub">Nexus WorkHub - Guindy, Chennai</p>
+          <p class="text-[10px] text-slate-500 mt-1 font-mono"><i class="fa-regular fa-clock mr-1 text-slate-400"></i><span id="invoice-slot-time">10:00 - 12:00</span></p>
+        </div>
+      </div>
+
+      <!-- Invoice Breakdown Table -->
+      <div class="border border-slate-200/80 rounded-2xl overflow-hidden mb-5 text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-100 text-slate-600 text-[10px] uppercase font-bold tracking-wider">
+            <tr>
+              <th class="px-4 py-2.5">Description</th>
+              <th class="px-4 py-2.5 text-right">Taxable Value</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700 font-mono">
+            <tr>
+              <td class="px-4 py-2.5">
+                <span class="font-sans font-semibold text-slate-800">Meeting Room Space & High-Speed Utilities</span>
+                <span class="block text-[10px] text-slate-400 font-sans">Includes 4K AV display, Wi-Fi 6, air conditioning</span>
+              </td>
+              <td class="px-4 py-2.5 text-right font-bold" id="invoice-base-amount">₹ 2,033.90</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 text-slate-500 text-[11px]">Goods & Services Tax (18% GST - CGST 9% + SGST 9%)</td>
+              <td class="px-4 py-2 text-right text-slate-600" id="invoice-gst-amount">₹ 366.10</td>
+            </tr>
+            <tr class="bg-blue-50/60 font-bold text-slate-900">
+              <td class="px-4 py-3 font-sans text-xs">Grand Total Paid (INR)</td>
+              <td class="px-4 py-3 text-right text-sm text-emerald-700" id="invoice-total-amount">₹ 2,400.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Payment Status & Method Footer -->
+      <div class="flex items-center justify-between text-xs pt-3 border-t border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">Method:</span>
+          <span class="font-bold text-slate-800 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200" id="invoice-method-display">UPI (PhonePe / GPay)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> Print Invoice
+          </button>
+          <button onclick="closeModal('invoice-view-modal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200/80 py-8 mt-16 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-extrabold text-slate-900">Work<span class="text-appspace-blue">Sphere</span></span>
+        <span>• Enterprise Meeting Room Scheduling System</span>
+      </div>
+      <div>
+        <span>WorkSphere Platform • Academic Coursework Project</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
