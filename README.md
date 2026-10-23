@@ -60,82 +60,187 @@ docker-compose.yml         Neo4j 5.26 Community
 
 ---
 
-## Setup on macOS Catalina (10.15)
+## Setup on macOS Catalina (10.15), step by step
 
-You need **Node.js** and **a Neo4j 5 database**. Pick one of the database options below.
+You will run **two programs in two separate Terminal windows**:
 
-### Step 0: Node.js
+| Window | Runs | Stays open? |
+|---|---|---|
+| Terminal 1 | the **Neo4j database** server | yes, while you use the app |
+| Terminal 2 | the **WorkSphere app** (Node.js) | yes, while you use the app |
 
-Node 22+ needs macOS 11 or later, so on Catalina install **Node.js 20 LTS** (macOS
-installer from <https://nodejs.org/en/download>, "previous releases"). Note that
-Node 20 is past its end-of-life date, but it's the newest line that supports
-Catalina. CI tests this project on Node 20 and 22.
+Docker Desktop is **not** needed (current Docker Desktop releases don't support
+Catalina). Every command below is typed into the macOS **Terminal** app
+(Applications → Utilities → Terminal). Catalina's default shell is `zsh`.
+
+### What you must do by hand (one-time)
+
+1. Install **Node.js 20** (step 1).
+2. Install **Java 17** (step 2).
+3. Download **Neo4j Community 5.26** (step 3).
+4. **Choose a database password** and use the *same* password in Neo4j (step 3)
+   and in the app's `.env` file (step 5). Neo4j has no WorkSphere database to
+   create by hand: Community Edition comes with one database named `neo4j`, and
+   `npm run seed` fills it.
+
+### Step 1: Install Node.js 20 (not 22 or newer)
+
+Why 20: Node.js 22 and newer require macOS 11 or later (Node's own platform list;
+Node 20 supports macOS 10.15). This project needs Node ≥ 20.10 because its test
+scripts use `node --test --test-concurrency`.
+
+1. Download **`node-v20.20.2.pkg`** (the newest Node 20) from
+   <https://nodejs.org/dist/v20.20.2/node-v20.20.2.pkg>.
+2. Double-click it and follow the installer.
+3. Check it in Terminal:
 
 ```bash
-node -v      # v20.x
-cd ~/Desktop
-git clone https://github.com/shivangixvashisht/Worksphere-Neo4j-DA-3.git
-cd Worksphere-Neo4j-DA-3
-npm install
-cp .env.example .env
-open -e .env          # set NEO4J_PASSWORD (at least 8 characters)
+node -v     # must print v20.20.2 (any v20.10 or newer works)
+npm -v
 ```
 
-### Option A (recommended on Catalina): Neo4j Community 5.26 tarball + Java 17
+Node 20 stopped receiving security updates in April 2026. It is still the newest
+Node line that officially supports Catalina, and this project is tested on it.
 
-Current Docker Desktop releases no longer support Catalina, so running Neo4j directly
-is the most reliable local option. Neo4j 5.26 (LTS) runs on Java 17 or 21.
+### Step 2: Install Java 17
 
-1. Install **Java 17**: the Eclipse Temurin 17 `.pkg` from <https://adoptium.net>.
-   Check with `/usr/libexec/java_home -V`.
-2. Download **Neo4j Community Edition 5.26.x** for macOS/Linux (`.tar.gz`) from the
-   Neo4j Deployment Center: <https://neo4j.com/deployment-center/>.
-3. In Terminal:
+Neo4j 5.26 is a Java program and needs Java 17 or 21.
+
+1. Download the **Eclipse Temurin 17 (LTS)** macOS **x64 `.pkg` JDK** installer from
+   <https://adoptium.net/temurin/releases/?os=mac&arch=x64&package=jdk&version=17>.
+2. Run the installer.
+3. Check it:
 
 ```bash
+/usr/libexec/java_home -v 17      # prints a path such as /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
+```
+
+If the Temurin installer refuses to run on 10.15, use another Java 17 build that
+lists macOS 10.15 support, such as Azul Zulu 17 from <https://www.azul.com/downloads/>.
+
+### Step 3: Download Neo4j, set its password, start it (Terminal 1)
+
+1. Download **Neo4j Community Edition 5.26.x for Linux/Mac** (`.tar.gz`) from the
+   Neo4j Deployment Center, <https://neo4j.com/deployment-center/>: choose
+   *Graph Database Self-Managed → Community → 5.26.x (LTS) → Linux / Mac Executable*.
+2. Safari usually saves it in `~/Downloads`. If Safari already unpacked it into a
+   folder, skip the `tar` line below.
+3. Choose your database password now (at least 8 characters, e.g. `worksphere2026`).
+   Then run:
+
+```bash
+# Terminal 1
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 cd ~/Downloads
-tar -xzf neo4j-community-5.26.*-unix.tar.gz
-cd neo4j-community-5.26.*
-bin/neo4j-admin dbms set-initial-password 'the-same-password-as-in-.env'
-bin/neo4j console            # keep this window open; Ctrl+C stops Neo4j
+tar -xzf neo4j-community-5.26.*-unix.tar.gz          # skip if already unpacked
+cd neo4j-community-5.26.*/
+xattr -dr com.apple.quarantine .                      # avoids macOS "cannot be opened" blocks
+bin/neo4j-admin dbms set-initial-password 'worksphere2026'   # ONLY before the first start
+bin/neo4j console
 ```
 
-If macOS blocks the downloaded files ("cannot be opened"), run
-`xattr -dr com.apple.quarantine ~/Downloads/neo4j-community-5.26.*` and try again.
-Neo4j Browser is then at <http://localhost:7474>.
+Wait until the window prints **`Started.`** and leave it open. Stop Neo4j later with
+**Ctrl + C**.
 
-### Option B: Docker Compose (if you already have a working Docker install)
+* A warning about the *maximum number of open files* is harmless for this small database.
+* `set-initial-password` only works **before the very first start**. Run after that, it
+  still prints "Changed password" but has no effect. To reset a forgotten password:
+  1. Stop Neo4j (Ctrl + C).
+  2. Delete the whole `data` folder inside the Neo4j folder (`rm -rf data`). This
+     also deletes the WorkSphere data.
+  3. Run `bin/neo4j-admin dbms set-initial-password '<new password>'`.
+  4. Start Neo4j again (`bin/neo4j console`).
+  5. Put the same password in `.env` and run `npm run seed` again.
+* Next time, Terminal 1 only needs:
+  `export JAVA_HOME=$(/usr/libexec/java_home -v 17) && cd ~/Downloads/neo4j-community-5.26.*/ && bin/neo4j console`
+* Optional check: open <http://localhost:7474> (Neo4j Browser) and log in as user
+  `neo4j` with your password.
+
+### Step 4: Get the project and install its packages (Terminal 2)
+
+The first time you run `git` on Catalina, macOS may offer to install the **Command
+Line Developer Tools**. Click *Install*, wait, then run the command again.
 
 ```bash
-docker compose up -d          # uses NEO4J_PASSWORD from .env on first start
-docker compose ps             # wait until "healthy"
+# Terminal 2
+cd ~/Desktop
+git clone -b claude/sharp-darwin-85xb0j https://github.com/shivangixvashisht/Worksphere-Neo4j-DA-3.git
+cd Worksphere-Neo4j-DA-3
+npm ci                     # installs the exact package versions from package-lock.json
 ```
 
-### Option C (backup): Neo4j Aura Free (cloud, nothing to install)
+### Step 5: Configure the environment (`.env`)
 
+```bash
+cp .env.example .env
+open -e .env               # opens it in TextEdit (or: nano .env)
+```
+
+Change this line to the password you chose in step 3, then save:
+
+```
+NEO4J_PASSWORD=worksphere2026
+```
+
+Leave the other lines as they are for a local Neo4j:
+
+| Variable | Value for a local Neo4j | Meaning |
+|---|---|---|
+| `NEO4J_URI` | `bolt://localhost:7687` | where Neo4j listens |
+| `NEO4J_USER` | `neo4j` | default admin user |
+| `NEO4J_PASSWORD` | your password | must match step 3 |
+| `NEO4J_DATABASE` | `neo4j` | Community's built-in database |
+| `PORT` | `5000` | the app's web port |
+
+`.env` is listed in `.gitignore`, so your password is never committed.
+
+### Step 6: Check the connection, load the data, start the app (Terminal 2)
+
+```bash
+npm run db:check           # must print "Neo4j Kernel | 5.26.x | community"
+npm run seed               # loads the WorkSphere data; ends with "Seed complete."
+npm start                  # ends with "WorkSphere DA-3 (Neo4j edition) Server Running!"
+```
+
+### Step 7: Open it
+
+Open **<http://localhost:5000>** in Safari or Chrome. The badge in the top bar must
+show **Neo4j 5.26.x**. Stop the app with **Ctrl + C** in Terminal 2.
+
+### If something goes wrong
+
+| Message | Fix |
+|---|---|
+| `NEO4J_PASSWORD is not set` | You skipped step 5, or `.env` is not in the project folder |
+| `Neo4j connection FAILED … ServiceUnavailable` | Neo4j isn't running: start it in Terminal 1 and wait for `Started.` |
+| `… Unauthorized` / `authentication failure` | The password in `.env` differs from the one set in step 3 |
+| `Unable to find any JVMs matching version "17"` | Java 17 isn't installed (step 2) |
+| `EADDRINUSE … 5000` | Something else uses port 5000: set `PORT=5050` in `.env` and open <http://localhost:5050> |
+| Page has no styling or icons | The page loads Tailwind CSS, icons and fonts from the internet: check your connection |
+
+### Alternatives to the local Neo4j in step 3
+
+**Neo4j Aura Free (cloud backup option):**
 1. Sign in at <https://console.neo4j.io> and create a **Free** instance.
-2. Download the credentials file shown once at creation.
-3. In `.env` set `NEO4J_URI=neo4j+s://<instance-id>.databases.neo4j.io`, and set
-   `NEO4J_USER` / `NEO4J_PASSWORD` (and `NEO4J_DATABASE` if listed) to the values in
-   that file.
+2. Download the credentials file (shown once).
+3. In `.env`, set `NEO4J_URI=neo4j+s://<id>.databases.neo4j.io` and set
+   `NEO4J_USER` / `NEO4J_PASSWORD` (and `NEO4J_DATABASE`, if listed) to the values
+   from that file.
+4. Skip steps 2 and 3, and continue with step 6.
 
-### Run WorkSphere
+**Docker Compose** (only on a machine where Docker already works, not Catalina):
+`docker compose up -d` uses `NEO4J_PASSWORD` from `.env`. Then continue with step 6.
 
-```bash
-npm run db:check     # prints the live Neo4j version, proving the connection
-npm run seed         # loads constraints + the original WorkSphere data + DA-3 categories
-npm start            # http://localhost:5000
-```
+### All npm commands
 
 | Command | What it does |
 |---|---|
 | `npm run db:check` | Connects and prints `dbms.components()` (name, version, edition) and the node count |
-| `npm run seed` | Resets, then runs `neo4j/01`, `02`, `05` |
+| `npm run seed` | Deletes all data, then runs `neo4j/01`, `02`, `05` (safe to repeat) |
 | `npm run db:reset` | Deletes all data (constraints kept) |
 | `npm start` / `npm run dev` | Starts the server (dev mode restarts on file changes) |
-| `npm test` | Unit tests (no database) |
-| `npm run test:integration` | Integration tests against a real Neo4j. **They wipe the database.** Set `WORKSPHERE_ALLOW_DB_RESET=true` or point `NEO4J_TEST_URI` at a throwaway instance |
+| `npm test` | Unit tests (no database needed) |
+| `npm run test:integration` | Integration tests against a real Neo4j. **They wipe the database.** Run as `WORKSPHERE_ALLOW_DB_RESET=true npm run test:integration`, then `npm run seed` again |
 | `npm run docs:queries` | Regenerates `neo4j/03_demo_queries.cypher` from the app's presets |
 
 ---
@@ -183,18 +288,19 @@ Application queries never use string concatenation: all values are `$parameters`
 
 ## Testing: what was actually executed
 
-All runs below were made in the development sandbox against a **real Neo4j 5.26.32
-Community server** (Docker image `neo4j:5.26-community`), using Node 22.
+Every run below used a **real Neo4j 5.26.32 Community server**. Nothing was mocked.
 
-| Test | Status |
-|---|---|
-| `npm test`: 17 unit tests (console guard: 15 allowed + 35 blocked queries, lexer, validation, graph shaping, demo params, generated-file drift) | **Executed, all pass** |
-| `npm run test:integration`: 39 integration tests on the real server (seed fidelity vs `seed_oracle.sql`, CRUD + cascades + sequences + constraints, overlap rule incl. 8 concurrent bookings, atomic rollback, console security layers 1–4 incl. timeout, all 22 demos with expected results) | **Executed, all pass** |
-| All 22 statements in `neo4j/03_demo_queries.cypher` run with their documented `:param` values | **Executed, all pass** |
-| `tests/ui/smoke.js` in headless Chromium against the running server (booking through checkout, member modal, HTML escaping, presets, graph view, blocked write) | **Executed, all pass**. External CDNs (Tailwind, Font Awesome, fonts, images) were blocked in the sandbox; the layout was checked separately with locally built Tailwind CSS |
-| GitHub Actions CI (`.github/workflows/ci.yml`, Node 20 + 22, Neo4j service container) | Runs on push; check the repository's Actions tab |
-| Setup on **macOS Catalina** (tarball + Java 17, Node 20) | **Not executed** (no macOS available); instructions follow the vendors' documented steps |
-| **Neo4j Aura Free** | **Not executed**; only the connection URI changes (`neo4j+s://`) |
+| Test | Where / how | Status |
+|---|---|---|
+| `npm test`: 17 unit tests (console guard: 15 allowed + 35 blocked queries, lexer, validation, graph shaping, demo params, generated-file drift) | Sandbox (Node 22 and Node **20.20.2**), GitHub Actions (Node 20 and 22) | **Executed, all pass** |
+| `npm run test:integration`: 39 integration tests (seed fidelity vs `seed_oracle.sql`, CRUD + cascades + sequences + constraints, overlap rule incl. 8 concurrent bookings, atomic rollback, console security layers 1–4 incl. timeout, all 22 demos with expected results) | Sandbox (Neo4j in Docker on Java 21, **and** the same Neo4j distribution started with `bin/neo4j console` on **Java 17**), GitHub Actions (Node 20 and 22) | **Executed, all pass** |
+| Full beginner flow on Node 20.20.2 + Java 17 Neo4j: fresh copy without `node_modules`/`.env` → `npm ci` → `cp .env.example .env` → `db:check` → `seed` → `npm start` / `npm run dev` → page and `/api/health` | Sandbox (Linux) | **Executed, works** |
+| `set-initial-password` before the first start; password reset by deleting `data` | Sandbox, Java 17 | **Executed, works** (deleting only `data/dbms` does **not** reset it) |
+| All 22 statements in `neo4j/03_demo_queries.cypher` with their `:param` values | Sandbox | **Executed, all pass** |
+| `tests/ui/smoke.js` in headless Chromium (booking through checkout, member modal, HTML escaping, presets, graph view, blocked write) | Sandbox, Node 22 and Node 20.20.2 | **Executed, all pass**. External CDNs were blocked in the sandbox; the layout was checked separately with locally built Tailwind CSS |
+| `npm audit` | Sandbox | **0 vulnerabilities** (after patch-level updates of Express 4.22.3 and vis-network 9.1.13) |
+| The steps **on a real Mac with macOS Catalina** | – | **Not executed** (no Mac available). Node 20's macOS 10.15 support is from Node's official platform list; the Temurin 17 / Neo4j tarball steps are the vendors' documented ones |
+| **Neo4j Aura Free** | – | **Not executed**; only the `.env` values change (`neo4j+s://…`) |
 
 ---
 

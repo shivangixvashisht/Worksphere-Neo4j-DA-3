@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "private": true,
   "engines": {
-    "node": ">=18"
+    "node": ">=20.10"
   },
   "scripts": {
     "start": "node backend/server.js",
